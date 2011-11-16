@@ -1,0 +1,13 @@
+*.pdb
+*~
+.*.swp
+*.ReSharper.user
+*.suo
+_ReSharper.*
+*.log
+/*.sbr
+/Build/
+bin/
+obj/
+.binaries/
+.obj/
