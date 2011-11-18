@@ -51,6 +51,40 @@ using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 
+class ReceiverThread : public Thread
+{
+public:
+	ReceiverThread(SocketTcpClient& aSocket)
+		: Thread("RECV")
+		, iSocket(aSocket)
+		, iBuffer(iSocket)
+	{
+	}
+
+	void Run()
+	{
+		try {
+			for (;;) {
+				Brn entry = iBuffer.Read(16);
+				ReaderBuffer reader;
+				reader.Set(entry);
+				ReaderBinary binary(reader);
+				TUint id = binary.ReadUintBe(4);
+				TUint frame = binary.ReadUintBe(4);
+				TUint tx = binary.ReadUintBe(4);
+				TUint rx = binary.ReadUintBe(4);
+				printf("id: %d, frame %d, tx %d, rx %d\n", id, frame, tx, rx);
+			}
+		}
+		catch (ReaderError&)
+		{
+		}
+	}
+
+	SocketTcpClient& iSocket;
+	Srs<1000> iBuffer;
+};
+
 int CDECL main(int aArgc, char* aArgv[])
 {
     InitialisationParams* initParams = InitialisationParams::Create();
@@ -64,6 +98,12 @@ int CDECL main(int aArgc, char* aArgv[])
     
     OptionString optionReceiver("-r", "--receiver", Brn(""), "Receiver endpoint (mandatory)");
     parser.AddOption(&optionReceiver);
+    
+    OptionUint optionPort("-p", "--port", 0, "Receiver datagram port (mandatory)");
+    parser.AddOption(&optionPort);
+    
+    OptionUint optionId("-i", "--id", 1, "Non-zero id for this set of messages");
+    parser.AddOption(&optionId);
     
     OptionUint optionCount("-c", "--count", 0, "Number of messages to send (0 = infinite)");
     parser.AddOption(&optionCount);
@@ -140,8 +180,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	Endpoint receiverEndpoint;
 
-	try
-	{
+	try	{
 		receiverEndpoint.SetAddress(receiverAddress);
 		receiverEndpoint.SetPort(receiverPort);
 	}
@@ -150,10 +189,34 @@ int CDECL main(int aArgc, char* aArgv[])
     	return (1);
 	}
 
+
+	TUint port = optionPort.Value();
+
+	if (port == 0) {
+    	printf("Invalid receiver datagram port\n");
+    	return (1);
+	}
+
+	TUint id = optionId.Value();
+
+	if (id == 0) {
+    	printf("Invalid id\n");
+    	return (1);
+	}
+
     TUint count = optionCount.Value();
-    TUint bytes = optionBytes.Value();
-    TUint ttl = optionTtl.Value();
+    
+	TUint bytes = optionBytes.Value();
+    
+	TUint ttl = optionTtl.Value();
+
     TUint delay = optionDelay.Value();
+
+	if (delay == 0) {
+    	printf("Invalid delay\n");
+    	return (1);
+	}
+
 //    TBool analyse = optionAnalyse.Value();
 	
 	printf("From  : %s\n", sender.CString());
@@ -193,7 +256,11 @@ int CDECL main(int aArgc, char* aArgv[])
 	Bws<1000> request;
 
 	request.Append("start ");
-	request.Append(receiver);
+	request.Append(receiverAddress);
+	request.Append(":");
+	Ascii::AppendDec(request, port);
+	request.Append(" ");
+	Ascii::AppendDec(request, id);
 	request.Append(" ");
 	Ascii::AppendDec(request, count);
 	request.Append(" ");
@@ -204,13 +271,41 @@ int CDECL main(int aArgc, char* aArgv[])
 	Ascii::AppendDec(request, ttl);
 	request.Append("\n");
 	
+	Brhz creq(request);
+
+	printf(creq.CString());
+
 	senderClient.Write(request);
 
-	Srs<1000> receiverBuffer(receiverClient);
+	Srs<1000> responseBuffer(senderClient);
 
-	for (;;) {
-		Brn line = receiverBuffer.ReadUntil('\n');
-		Brhz cline(line);
-		printf(cline.CString());
+	Brn response = responseBuffer.ReadUntil('\n');
+
+	if (response != Brn("OK")) {
+		senderClient.Close();
+		Brhz cresp(response);
+		printf("%s\n", cresp.CString());
+		return (1);
 	}
+
+	printf("Starting receiver thread\n");
+
+	ReceiverThread* thread = new ReceiverThread(receiverClient);
+	thread->Start();
+
+	mygetch();
+
+	printf("Interrupted\n");
+
+	senderClient.Write(Brn("stop\n"));
+
+	senderClient.Close();
+
+	receiverClient.Interrupt(true);
+
+	delete (thread);
+
+	receiverClient.Close();
+
+	return (0);
 }
