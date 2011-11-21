@@ -46,19 +46,66 @@ int mygetch()
 
 #endif
 
-
 using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 
 class ReceiverThread : public Thread
 {
+private:
+	SocketTcpClient& iSocket;
+	Srs<1000> iBuffer;
+	TBool iAnalyse;
+	TUint iId;
+	TBool iFirst;
+
 public:
-	ReceiverThread(SocketTcpClient& aSocket)
+	ReceiverThread(SocketTcpClient& aSocket, TBool aAnalyse, TUint aId)
 		: Thread("RECV")
 		, iSocket(aSocket)
 		, iBuffer(iSocket)
+		, iAnalyse(aAnalyse)
+		, iId(aId)
+		, iFirst(true)
 	{
+	}
+
+	TUint iLastFrame;
+	TUint iLastTx;
+	TUint iLastRx;
+
+	void Analyse(TUint aId, TUint aFrame, TUint aTx, TUint aRx)
+	{
+		if (aId != iId) {
+			printf("Unrecognised Id (id: %d, frame %d, tx %d, rx %d)\n", aId, aFrame, aTx, aRx);
+			return;
+		}
+
+		if (!iFirst) {
+			if (aFrame < iLastFrame) {
+				printf("Out of order frames\n");
+				printf("With ...... frame %d, tx %d, rx %d\n", iLastFrame, iLastTx, iLastRx);
+				printf("Followed by frame %d, tx %d, rx %d\n", aFrame, aTx, aRx);
+			}
+			else if (aFrame == iLastFrame) {
+				printf("Repeasted frames\n");
+				printf("With ...... frame %d, tx %d, rx %d\n", iLastFrame, iLastTx, iLastRx);
+				printf("Followed by frame %d, tx %d, rx %d\n", aFrame, aTx, aRx);
+			}
+			else {
+				TUint missed = aFrame - iLastFrame - 1;
+
+				if (missed > 0) {
+					printf("Missed %d frames\n", missed);
+					printf("Between frame %d, tx %d, rx %d\n", iLastFrame, iLastTx, iLastRx);
+					printf("And ... frame %d, tx %d, rx %d\n", aFrame, aTx, aRx);
+				}
+			}
+		}
+
+		iLastFrame = aFrame;
+		iLastTx = aTx;
+		iLastRx = aRx;
 	}
 
 	void Run()
@@ -66,23 +113,30 @@ public:
 		try {
 			for (;;) {
 				Brn entry = iBuffer.Read(16);
+				
 				ReaderBuffer reader;
+				
 				reader.Set(entry);
+				
 				ReaderBinary binary(reader);
+
 				TUint id = binary.ReadUintBe(4);
 				TUint frame = binary.ReadUintBe(4);
 				TUint tx = binary.ReadUintBe(4);
 				TUint rx = binary.ReadUintBe(4);
-				printf("id: %d, frame %d, tx %d, rx %d\n", id, frame, tx, rx);
+
+				if (iAnalyse) {
+					Analyse(id, frame, tx, rx);
+				}
+				else {
+					printf("id: %d, frame %d, tx %d, rx %d\n", id, frame, tx, rx);
+				}
 			}
 		}
 		catch (ReaderError&)
 		{
 		}
 	}
-
-	SocketTcpClient& iSocket;
-	Srs<1000> iBuffer;
 };
 
 int CDECL main(int aArgc, char* aArgv[])
@@ -111,7 +165,7 @@ int CDECL main(int aArgc, char* aArgv[])
     OptionUint optionBytes("-b", "--bytes", 12, "Number of bytes in each message (min = 12, max = 65536)");
     parser.AddOption(&optionBytes);
     
-    OptionUint optionDelay("-d", "--delay", 10, "Delay in ms between each message");
+    OptionUint optionDelay("-d", "--delay", 10000, "Delay in uS between each message");
     parser.AddOption(&optionDelay);
 
     OptionUint optionTtl("-t", "--ttl", 1, "Ttl used for messages");
@@ -217,7 +271,7 @@ int CDECL main(int aArgc, char* aArgv[])
     	return (1);
 	}
 
-//    TBool analyse = optionAnalyse.Value();
+    TBool analyse = optionAnalyse.Value();
 	
 	printf("From  : %s\n", sender.CString());
 	printf("To    : %s\n", receiver.CString());
@@ -290,7 +344,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	printf("Starting receiver thread\n");
 
-	ReceiverThread* thread = new ReceiverThread(receiverClient);
+	ReceiverThread* thread = new ReceiverThread(receiverClient, analyse, id);
 	thread->Start();
 
 	mygetch();
