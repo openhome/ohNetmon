@@ -403,8 +403,6 @@ int CDECL main(int aArgc, char* aArgv[])
 	
 	Brhz creq(request);
 
-	printf(creq.CString());
-
 	senderClient.Write(request);
 
 	Srs<1000> responseBuffer(senderClient);
