@@ -47,8 +47,6 @@ uset4 = no
 
 default : all
 
-all : ohNetmon
-
 make_obj_dir : $(objdirbare)
 
 $(objdirbare) :
@@ -56,6 +54,15 @@ $(objdirbare) :
 
 clean:
 	del /S /Q $(objdirbare)
+
+all : ohNetmon ohNetworkMonitor
+
+ohNetworkMonitor : make_obj_dir $(objdir)ohNetworkMonitor.$(exeext) 
+
+$(objdir)ohNetworkMonitor.$(exeext) : ohNetworkMonitor.cpp NetworkMonitor.cpp
+	$(compiler)ohNetworkMonitor.$(objext) -c $(cflags) $(includes) ohNetworkMonitor.cpp
+	$(compiler)NetworkMonitor.$(objext) -c $(cflags) $(includes) NetworkMonitor.cpp
+	$(link) $(linkoutput)$(objdir)ohNetworkMonitor.$(exeext) $(objdir)ohNetworkMonitor.$(objext) $(objdir)NetworkMonitor.$(objext) $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext) $(ohnetdir)$(libprefix)ohNetCore.lib $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 ohNetmon : make_obj_dir $(objdir)ohNetmon.$(exeext) 
 

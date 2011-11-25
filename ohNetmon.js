@@ -1,9 +1,9 @@
 var net = require('net');
 var dgram = require('dgram');
 
-var rxReportPort = 51111;
-var rxReceivePort = 51112;
-var txCommandPort = 52222;
+var txCommandPort = 8888;
+var rxReportPort = 8889;
+var rxReceivePort = 8889;
 
 var rxBufferReadIndex = 0;
 var rxBufferWriteIndex = 0;
@@ -27,8 +27,8 @@ var txTtl;
 
 var txStarted;
 var txTimer;
+var txId;
 var txFrame;
-var txMessage;
 
 function rxReport() {
 	if (--rxBufferCount == 0) {
@@ -37,14 +37,31 @@ function rxReport() {
 	}
 
 	var entry = rxBuffer[rxBufferReadIndex];
-	
+
 	rxBuffer[rxBufferReadIndex++] = null;
-	
+
 	if (rxBufferReadIndex == rxBufferMax) {
-		rxBufferReadIndex = 0;
+	    rxBufferReadIndex = 0;
 	}
 
-	reportStream.write(entry);
+	zeroid = true;
+
+	for (var i = 0; i < 4; i++) {
+	    if (entry[i] != 0) {
+	        zeroid = false;
+	        break;
+	    }
+	}
+
+	if (zeroid) {
+	    reportConnected = false;
+	    reportActive = false;
+	    clearInterval(reportTimer);
+	    reportStream.end();
+	}
+	else {
+	    reportStream.write(entry);
+	}
 }
 
 var rxServer = net.createServer(function (stream) {
@@ -71,98 +88,111 @@ var rxServer = net.createServer(function (stream) {
 var rxReceiver = dgram.createSocket("udp4");
 
 rxReceiver.on("message", function (msg, rinfo) {
-  	var timestamp = new Date().getTime() * 1000;
-  
-  	var entry = new Buffer(16);
-  
-  	for (var i = 0; i < 12; i++) {
-  		entry[i] = msg[i];
-  	}
-  
-  	entry[12] = (timestamp >>> 24) & 0xFF;
-  	entry[13] = (timestamp >>> 16) & 0xFF;
-  	entry[14] = (timestamp >>> 8) & 0xFF;
-  	entry[15] = timestamp & 0xFF;
+    var timestamp = new Date().getTime() * 1000;
 
-	if (rxBufferOverflow) {
-		if (rxBufferCount < (rxBufferMax - rxBufferOverflowGaurd)) {
-			var blown = new Buffer(16);
+    var entry = new Buffer(16);
 
-			blown.Fill(0);
+    for (var i = 0; i < 12; i++) {
+        entry[i] = msg[i];
+    }
 
-			rxBufferCount++;
-	
-			rxBuffer[rxBufferWriteIndex++] = blown;
-	
-			if (rxBufferWriteIndex == rxBufferMax) {
-				rxBufferWriteIndex = 0;
-			}
+    entry[12] = (timestamp >>> 24) & 0xFF;
+    entry[13] = (timestamp >>> 16) & 0xFF;
+    entry[14] = (timestamp >>> 8) & 0xFF;
+    entry[15] = timestamp & 0xFF;
 
-			rxBufferCount++;
-	
-			rxBuffer[rxBufferWriteIndex++] = entry;
-	
-			if (rxBufferWriteIndex == rxBufferMax) {
-				rxBufferWriteIndex = 0;
-			}
-			
-			rxBufferOverflow = false;
-			
-			if (reportConnected && !reportActive) {
-	    		reportActive = true;
-	    		reportTimer = setInterval(rxReport, 1);
-			}
-		}
-	}
-	else {
-		if (rxBufferCount < rxBufferMax) {
-			rxBufferCount++;
-	
-			rxBuffer[rxBufferWriteIndex++] = entry;
-	
-			if (rxBufferWriteIndex == rxBufferMax) {
-				rxBufferWriteIndex = 0;
-			}
+    if (rxBufferOverflow) {
+        if (rxBufferCount < (rxBufferMax - rxBufferOverflowGuard)) {
+            var blown = new Buffer(16);
 
-			if (reportConnected && !reportActive) {
-	    		reportActive = true;
-	    		reportTimer = setInterval(rxReport, 1);
-			}
-		}
-		else {
-			rxBufferOverflow = true;
-		}
-	}
+            blown.fill(0);
+
+            rxBufferCount++;
+
+            rxBuffer[rxBufferWriteIndex++] = blown;
+
+            if (rxBufferWriteIndex == rxBufferMax) {
+                rxBufferWriteIndex = 0;
+            }
+
+            rxBufferCount++;
+
+            rxBuffer[rxBufferWriteIndex++] = entry;
+
+            if (rxBufferWriteIndex == rxBufferMax) {
+                rxBufferWriteIndex = 0;
+            }
+
+            rxBufferOverflow = false;
+
+            if (reportConnected && !reportActive) {
+                reportActive = true;
+                reportTimer = setInterval(rxReport, 1);
+            }
+        }
+    }
+    else {
+        if (rxBufferCount < rxBufferMax) {
+            rxBufferCount++;
+
+            rxBuffer[rxBufferWriteIndex++] = entry;
+
+            if (rxBufferWriteIndex == rxBufferMax) {
+                rxBufferWriteIndex = 0;
+            }
+
+            if (reportConnected && !reportActive) {
+                reportActive = true;
+                reportTimer = setInterval(rxReport, 1);
+            }
+        }
+        else {
+            rxBufferOverflow = true;
+            console.log('TX Overflow');
+        }
+    }
 });
 
-function txError(stream, txMessage) {
-	var error = "ERROR " + txMessage;
+function txError(stream, message) {
+	var error = "ERROR " + message;
     console.log("TX " + error);
     stream.write(error);
     stream.write("\n");
 }
 
 function txSend() {
+    message = new Buffer(txBytes);
+
+    message.fill(0);
+
+    message[0] = (txId >>> 24) & 0xFF;
+    message[1] = (txId >>> 16) & 0xFF;
+    message[2] = (txId >>> 8) & 0xFF;
+    message[3] = txId & 0xFF;
+
+    message[4] = (txFrame >>> 24) & 0xFF;
+    message[5] = (txFrame >>> 16) & 0xFF;
+    message[6] = (txFrame >>> 8) & 0xFF;
+    message[7] = txFrame & 0xFF;
+
+    var timestamp = new Date().getTime() * 1000;
+	
+    message[8] = (timestamp >>> 24) & 0xFF;
+    message[9] = (timestamp >>> 16) & 0xFF;
+    message[10] = (timestamp >>> 8) & 0xFF;
+    message[11] = timestamp & 0xFF;
+
+	txSender.send(message, 0, txBytes, txPort, txAddress);
+
 	txFrame++;
 
-    txMessage[4] = (txFrame >>> 24) & 0xFF;
-    txMessage[5] = (txFrame >>> 16) & 0xFF;
-    txMessage[6] = (txFrame >>> 8) & 0xFF;
-    txMessage[7] = txFrame & 0xFF;
-    
-	var timestamp = new Date().getTime() * 1000;
-	
-    txMessage[8] = (timestamp >>> 24) & 0xFF;
-    txMessage[9] = (timestamp >>> 16) & 0xFF;
-    txMessage[10] = (timestamp >>> 8) & 0xFF;
-    txMessage[11] = timestamp & 0xFF;
-
-	txSender.send(txMessage, 0, txBytes, txPort, txAddress);
-	
 	if (txCount != 0) {
 		if (--txCount == 0) {
 			txStarted = false;
-    		clearInterval(txTimer);
+			clearInterval(txTimer);
+			message = new Buffer(12);
+			message.fill(0);
+			txSender.send(message, 0, 12, txPort, txAddress);
 		    console.log("TX Stopped");
 			return;
 		}
@@ -205,14 +235,14 @@ var txServer = net.createServer(function (stream) {
             txAddress = aparts[0];
 
             try {
-                id = parseInt(parts[2]);
+                txId = parseInt(parts[2]);
             }
             catch (err) {
                 txError(stream, "Invalid id specified");
                 return;
             }
 
-            if (id == 0) {
+            if (txId == 0) {
                 txError(stream, "Id must be non-zero");
                 return;
             }
@@ -277,15 +307,6 @@ var txServer = net.createServer(function (stream) {
 
             txFrame = 0;
 
-            txMessage = new Buffer(txBytes);
-
-            txMessage.fill(0);
-
-            txMessage[0] = (id >>> 24) & 0xFF;
-            txMessage[1] = (id >>> 16) & 0xFF;
-            txMessage[2] = (id >>> 8) & 0xFF;
-            txMessage[3] = id & 0xFF;
-
             txTimer = setInterval(txSend, txDelay);
 
             var num = txCount;
@@ -294,12 +315,15 @@ var txServer = net.createServer(function (stream) {
                 num = "infinite";
             }
 
-            console.log("TX sending " + num + " messages with an id of " + id + " and a length of " + txBytes + " bytes to " + txAddress + ":" + txPort + " with a delay of " + txDelay + "mS and ttl of " + txTtl);
+            console.log("TX sending " + num + " messages with an id of " + txId + " and a length of " + txBytes + " bytes to " + txAddress + ":" + txPort + " with a delay of " + txDelay + "mS and ttl of " + txTtl);
         }
         else if (parts[0] == 'stop') {
             if (txStarted == true) {
                 txStarted = false;
                 clearInterval(txTimer);
+                message = new Buffer(12);
+                message.fill(0);
+                txSender.send(message, 0, 12, txPort, txAddress);
                 console.log("TX Stopped");
             }
             stream.write("OK\n");

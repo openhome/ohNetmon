@@ -59,7 +59,14 @@ clean :
 
 all : ohNetmon
 
-ohNetmon : $(objdir)ohNetmon.$(exeext)
+ohNetworkMonitor : make_obj_dir $(objdir)$(dllprefix)ohNetworkMonitor.$(dllext)
+
+$(objdir)$(dllprefix)ohNetworkMonitor.$(dllext) : NetworkMonitor.cpp
+	$(compiler)NetworkMonitor.$(objext) -c $(cflags) $(includes) NetworkMonitor.cpp
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)NetworkMonitor.$(dllext) $(objdir)NetworkMonitor.$(objext)
+
+ohNetmon : make_obj_dir $(objdir)ohNetmon.$(exeext)
+
 $(objdir)ohNetmon.$(exeext) : ohNetmon.cpp
 	$(compiler)ohNetmon.$(objext) -c $(cflags) $(includes) ohNetmon.cpp
 	$(link) $(linkoutput)$(objdir)ohNetmon.$(exeext) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)

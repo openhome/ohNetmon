@@ -50,29 +50,60 @@ using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 
-class ReceiverThread : public Thread
+class ReceiverThread
 {
 private:
-	SocketTcpClient& iSocket;
-	Srs<1000> iBuffer;
-	TBool iAnalyse;
-	TUint iId;
-	TBool iFirst;
+	ThreadFunctor* iThread;
 
-public:
-	ReceiverThread(SocketTcpClient& aSocket, TBool aAnalyse, TUint aId)
-		: Thread("RECV")
-		, iSocket(aSocket)
-		, iBuffer(iSocket)
-		, iAnalyse(aAnalyse)
-		, iId(aId)
-		, iFirst(true)
-	{
-	}
+	SocketTcpClient& iSocket;
+
+	Srs<1000> iBuffer;
+
+	TBool iAnalyse;
+
+	TUint iId;
+
+	TUint iTotal;
+	TUint iMissed;
+
+	TInt iMax;
+	TInt iMin;
+	TUint iTimings[100];
 
 	TUint iLastFrame;
 	TUint iLastTx;
 	TUint iLastRx;
+
+	TUint iTxTimebase;
+	TUint iRxTimebase;
+
+public:
+	ReceiverThread(SocketTcpClient& aSocket, TBool aAnalyse, TUint aId)
+		: iSocket(aSocket)
+		, iBuffer(iSocket)
+		, iAnalyse(aAnalyse)
+		, iId(aId)
+		, iTotal(0)
+		, iMissed(0)
+		, iMax(0)
+		, iMin(0)
+	{
+		for (TUint i = 0; i < 100; i++) {
+			iTimings[i] = 0;
+		}
+
+		iThread = new ThreadFunctor("RECV", MakeFunctor(*this, &ReceiverThread::Run));
+		iThread->Start();
+	}
+
+	void ReportTimings()
+	{
+		for (TInt i = 0; i < 100; i++) {
+			printf("%d : %d\n", i - 10, iTimings[i]);
+		}
+		printf("Total  : %d\n", iTotal);
+		printf("Missed : %d\n", iMissed);
+	}
 
 	void Analyse(TUint aId, TUint aFrame, TUint aTx, TUint aRx)
 	{
@@ -81,31 +112,58 @@ public:
 			return;
 		}
 
-		if (!iFirst) {
+		if (iTotal == 0) {
+			iTxTimebase = aTx;
+			iRxTimebase = aRx;
+			iLastFrame = aFrame;
+			iLastTx = 0;
+			iLastRx = 0;
+		}
+		else {
+			TUint txTimestamp = aTx - iTxTimebase;
+			TUint rxTimestamp = aRx - iRxTimebase;
+
 			if (aFrame < iLastFrame) {
-				printf("Out of order frames\n");
-				printf("With ...... frame %d, tx %d, rx %d\n", iLastFrame, iLastTx, iLastRx);
-				printf("Followed by frame %d, tx %d, rx %d\n", aFrame, aTx, aRx);
+				printf("Out of order frames with %d folowed by %d\n", iLastFrame, aFrame);
 			}
 			else if (aFrame == iLastFrame) {
-				printf("Repeasted frames\n");
-				printf("With ...... frame %d, tx %d, rx %d\n", iLastFrame, iLastTx, iLastRx);
-				printf("Followed by frame %d, tx %d, rx %d\n", aFrame, aTx, aRx);
+				printf("Repeated frame %d\n", aFrame);
 			}
 			else {
 				TUint missed = aFrame - iLastFrame - 1;
 
 				if (missed > 0) {
-					printf("Missed %d frames\n", missed);
-					printf("Between frame %d, tx %d, rx %d\n", iLastFrame, iLastTx, iLastRx);
-					printf("And ... frame %d, tx %d, rx %d\n", aFrame, aTx, aRx);
+					printf("Missed %d frames betwwen %d and %d\n", missed, iLastFrame, aFrame);
+					iMissed += missed;
+				}
+				else {
+					TInt networkTime = rxTimestamp - txTimestamp;
+
+					TInt networkTimeMs = networkTime / 1000;
+
+					TInt timingsIndex = networkTimeMs + 10;
+
+					if (timingsIndex > 0 && timingsIndex < 100) {
+						iTimings[timingsIndex]++;
+					}
+
+					if (networkTime > iMax) {
+						iMax = networkTime;
+						printf("Max %duS on frame %d\n", iMax, aFrame);
+					}
+					if (networkTime < iMin) {
+						iMin = networkTime;
+						printf("Min %duS on frame %d\n", iMin, aFrame);
+					}
 				}
 			}
+
+			iLastFrame = aFrame;
+			iLastTx = txTimestamp;
+			iLastRx = rxTimestamp;
 		}
 
-		iLastFrame = aFrame;
-		iLastTx = aTx;
-		iLastRx = aRx;
+		iTotal++;
 	}
 
 	void Run()
@@ -135,7 +193,13 @@ public:
 		}
 		catch (ReaderError&)
 		{
+			printf("Receiver connection terminated\n");
 		}
+	}
+
+	~ReceiverThread()
+	{
+		delete (iThread);
 	}
 };
 
@@ -175,6 +239,7 @@ int CDECL main(int aArgc, char* aArgv[])
     parser.AddOption(&optionAnalyse);
 
     if (!parser.Parse(aArgc, aArgv)) {
+	    Net::UpnpLibrary::Close();
         return (1);
     }
 
@@ -182,6 +247,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
     if (sender.Bytes() == 0) {
     	printf("No sender endpoint specified\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
     }
     
@@ -196,6 +262,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 	catch (AsciiError&)	{
     	printf("Invalid sender endpoint\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -208,6 +275,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 	catch (NetworkError&) {
     	printf("Invalid sender endpoint\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -215,6 +283,7 @@ int CDECL main(int aArgc, char* aArgv[])
     
     if (receiver.Bytes() == 0) {
     	printf("No receiver endpoint specified\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
     }
     
@@ -229,6 +298,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 	catch (AsciiError&)	{
     	printf("Invalid receiver endpoint\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -240,6 +310,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 	catch (NetworkError&) {
     	printf("Invalid receiver endpoint\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -248,6 +319,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	if (port == 0) {
     	printf("Invalid receiver datagram port\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -255,6 +327,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	if (id == 0) {
     	printf("Invalid id\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -268,6 +341,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	if (delay == 0) {
     	printf("Invalid delay\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -291,6 +365,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 	catch (NetworkError&) {
     	printf("Unable to contact receiver\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -302,6 +377,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 	catch (NetworkError&) {
     	printf("Unable to contact sender\n");
+	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
@@ -339,27 +415,44 @@ int CDECL main(int aArgc, char* aArgv[])
 		senderClient.Close();
 		Brhz cresp(response);
 		printf("%s\n", cresp.CString());
+	    Net::UpnpLibrary::Close();
 		return (1);
 	}
 
 	printf("Starting receiver thread\n");
 
 	ReceiverThread* thread = new ReceiverThread(receiverClient, analyse, id);
-	thread->Start();
 
-	mygetch();
+	for (;;) {
+		TUint key = mygetch();
 
-	printf("Interrupted\n");
+		if (key == 't') {
+			thread->ReportTimings();
+		}
+		else if (key == 'q') {
+			break;
+		}
+	}
+
+	printf("Stopping sender\n");
 
 	senderClient.Write(Brn("stop\n"));
 
+	printf("Closing sender\n");
+
 	senderClient.Close();
 
-	receiverClient.Interrupt(true);
+	printf("Deleting receiver thread\n");
 
 	delete (thread);
 
+	printf("Closing receiver\n");
+
 	receiverClient.Close();
+
+	printf("Closing library\n");
+
+	Net::UpnpLibrary::Close();
 
 	return (0);
 }
