@@ -57,16 +57,17 @@ make_obj_dir :
 clean :
 	rm -rf $(objdir)
 
-all : ohNetmon
+all : ohNetmon ohNetworkMonitor
 
+.PHONY : ohNetworkMonitor
 ohNetworkMonitor : make_obj_dir $(objdir)$(dllprefix)ohNetworkMonitor.$(dllext)
 
 $(objdir)$(dllprefix)ohNetworkMonitor.$(dllext) : NetworkMonitor.cpp
 	$(compiler)NetworkMonitor.$(objext) -c $(cflags) $(includes) NetworkMonitor.cpp
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)NetworkMonitor.$(dllext) $(objdir)NetworkMonitor.$(objext)
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)NetworkMonitor.$(dllext) $(objdir)NetworkMonitor.$(objext) $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
+
 
 .PHONY : ohNetmon
-
 ohNetmon : make_obj_dir $(objdir)ohNetmon.$(exeext)
 
 $(objdir)ohNetmon.$(exeext) : ohNetmon.cpp
