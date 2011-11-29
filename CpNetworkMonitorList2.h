@@ -13,68 +13,78 @@
 namespace OpenHome {
 namespace Net {
 
+class CpNetworkMonitorList2Device;
+
 class CpNetworkMonitor
 {
 	static const TUint kMaxNameBytes = 41;
 
+	friend class CpNetworkMonitorList2Device;
+
 public:
     const Brx& Name() const;
+	TIpAddress Address() const;
 	TUint Sender() const;
 	TUint Receiver() const;
 	TUint Results() const;
-
+	void AddRef();
+	void RemoveRef();
 private:
-    CpNetworkMonitor(const Brx& aName, TUint aSender, TUint aReceiver, TUint aResults);
-
-	void Update(const Brx& aName);
+    CpNetworkMonitor(const Brx& aName, TIpAddress aAddress, TUint aSender, TUint aReceiver, TUint aResults);
     
 private:
 	Bws<kMaxNameBytes> iName;
+	TIpAddress iAddress;
 	TUint iSender;
 	TUint iReceiver;
 	TUint iResults;
+	TUint iRefCount;
 };
 
 class ICpNetworkMonitorList2Handler
 {
 public:
-	virtual void NetworkManagerAdded(CpNetworkMonitor& aNetworkMonitor) = 0;
-	virtual void NetworkManagerChanged(CpNetworkMonitor& aNetworkMonitor) = 0;
-	virtual void NetworkManagerRemoved(CpNetworkMonitor& aNetworkMonitor) = 0;
+	virtual void NetworkMonitorAdded(CpNetworkMonitor& aNetworkMonitor) = 0;
+	virtual void NetworkMonitorRemoved(CpNetworkMonitor& aNetworkMonitor) = 0;
 	~ICpNetworkMonitorList2Handler() {}
 };
 
-typedef void (ICpNetworkMonitorList2Handler::*ICpNetworkMonitorList2HandlerFunction)(CpNetworkMonitorList2Group&);
+typedef void (ICpNetworkMonitorList2Handler::*ICpNetworkMonitorList2HandlerFunction)(CpNetworkMonitor&);
 
 class CpNetworkMonitorList2Job
 {
 public:
 	CpNetworkMonitorList2Job(ICpNetworkMonitorList2Handler& aHandler);
-	void Set(CpNetworkMonitorList2Group& aGroup, ICpNetworkMonitorList2HandlerFunction aFunction);
+	void Set(CpNetworkMonitor& aNetworkMonitor, ICpNetworkMonitorList2HandlerFunction aFunction);
     virtual void Execute();
 private:
 	ICpNetworkMonitorList2Handler* iHandler;
-	CpNetworkMonitorList2Group* iGroup;
+	CpNetworkMonitor* iNetworkMonitor;
 	ICpNetworkMonitorList2HandlerFunction iFunction;
 };
 
-class CpNetworkMonitorList2Device : public INonCopyable, public ICpNetworkMonitorList2Handler
+class CpNetworkMonitorList2Device : public INonCopyable
 {
-protected:
-	CpNetworkMonitorList2Device(CpDevice& aDevice, ICpNetworkMonitorList2Handler aHandler);
+public:
+	CpNetworkMonitorList2Device(CpDevice& aDevice, ICpNetworkMonitorList2Handler& aHandler);
 	
 public:
 	TBool IsAttachedTo(CpDevice& aDevice);
-	virtual ~CpNetworkMonitorList2Device();
+	~CpNetworkMonitorList2Device();
 
 private:
-	// ICpTopology2GroupHandler
-    virtual void SetSourceIndex(TUint aIndex) = 0;
-    virtual void SetStandby(TBool aValue) = 0;
+	void EventInitialEvent();
+	void EventNameChanged();
 
-protected:
+private:
 	CpDevice& iDevice;
-	ICpNetworkMonitorList2Handler iHandler;
+	ICpNetworkMonitorList2Handler& iHandler;
+	TIpAddress iAddress;
+	CpNetworkMonitor* iNetworkMonitor;
+	CpProxyAvOpenhomeOrgNetworkMonitor1* iService;
+	TUint iSender;
+	TUint iReceiver;
+	TUint iResults;
 };
 
 class CpNetworkMonitorList2 : public ICpNetworkMonitorList1Handler, public ICpNetworkMonitorList2Handler
@@ -96,9 +106,8 @@ private:
 	void DeviceRemoved(CpDevice& aDevice);
 
 	// ICpNetworkMonitorList2Handler
-	void NetworkManagerAdded(CpNetworkMonitor& aNetworkMonitor);
-	void NetworkManagerChanged(CpNetworkMonitor& aNetworkMonitor);
-	void NetworkManagerRemoved(CpNetworkMonitor& aNetworkMonitor);
+	void NetworkMonitorAdded(CpNetworkMonitor& aNetworkMonitor);
+	void NetworkMonitorRemoved(CpNetworkMonitor& aNetworkMonitor);
 
 	void Run();
 	

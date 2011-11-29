@@ -121,6 +121,11 @@ public:
 
                         Endpoint endpoint(port, ip);
 
+                        if (endpoint.Address() == 0) {
+                            Write(Brn("ERROR Invalid 0.0.0.0 ip address\n"));
+                            continue;
+                        }
+
                         Write(Brn("OK\n"));
 
                         iSender->Start(endpoint, period, bytes, count, ttl, id);

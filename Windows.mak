@@ -66,7 +66,9 @@ $(objdir)ohNetworkMonitor.$(exeext) : ohNetworkMonitor.cpp NetworkMonitor.cpp
 
 ohNetmon : make_obj_dir $(objdir)ohNetmon.$(exeext) 
 
-$(objdir)ohNetmon.$(exeext) : ohNetmon.cpp
+$(objdir)ohNetmon.$(exeext) : ohNetmon.cpp CpNetworkMonitorList1.cpp CpNetworkMonitorList2.cpp
 	$(compiler)ohNetmon.$(objext) -c $(cflags) $(includes) ohNetmon.cpp
-	$(link) $(linkoutput)$(objdir)ohNetmon.$(exeext) $(objdir)ohNetmon.$(objext) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
+	$(compiler)CpNetworkMonitorList1.$(objext) -c $(cflags) $(includes) CpNetworkMonitorList1.cpp
+	$(compiler)CpNetworkMonitorList2.$(objext) -c $(cflags) $(includes) CpNetworkMonitorList2.cpp
+	$(link) $(linkoutput)$(objdir)ohNetmon.$(exeext) $(objdir)ohNetmon.$(objext) $(objdir)CpNetworkMonitorList1.$(objext) $(objdir)CpNetworkMonitorList2.$(objext) $(ohnetdir)CpAvOpenhomeOrgNetworkMonitor1.$(objext) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 

@@ -8,6 +8,8 @@
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
 
+#include "CpNetworkMonitorList2.h"
+
 #include <vector>
 #include <stdio.h>
 
@@ -46,9 +48,91 @@ int mygetch()
 
 #endif
 
+namespace OpenHome {
+namespace Net {
+
+	class NetworkMonitorList : public ICpNetworkMonitorList2Handler
+	{
+	public:
+		NetworkMonitorList();
+		void Report() const;
+		CpNetworkMonitor* Find(const Brx& aName);
+		virtual void NetworkMonitorAdded(CpNetworkMonitor& aNetworkMonitor);
+		virtual void NetworkMonitorRemoved(CpNetworkMonitor& aNetworkMonitor);
+		~NetworkMonitorList();
+	private:
+		mutable Mutex iMutex;
+		std::vector<CpNetworkMonitor*> iList;
+	};
+
+} // namespace Net
+} // namespace OpenHome
+
 using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
+
+NetworkMonitorList::NetworkMonitorList()
+	: iMutex("NMLI")
+{
+}
+
+void NetworkMonitorList::NetworkMonitorAdded(CpNetworkMonitor& aNetworkMonitor)
+{
+	aNetworkMonitor.AddRef();
+	iMutex.Wait();
+	iList.push_back(&aNetworkMonitor);
+	iMutex.Signal();
+}
+
+void NetworkMonitorList::NetworkMonitorRemoved(CpNetworkMonitor& /*aNetworkMonitor*/)
+{
+}
+
+void NetworkMonitorList::Report() const
+{
+	iMutex.Wait();
+
+	std::vector<CpNetworkMonitor*>::const_iterator it = iList.begin();
+
+    while (it != iList.end()) {
+		Brhz name((*it)->Name());
+		printf(name.CString());
+		printf("\n");
+        it++;
+    }   
+
+	iMutex.Signal();
+}
+
+CpNetworkMonitor* NetworkMonitorList::Find(const Brx& aName)
+{
+	iMutex.Wait();
+
+	std::vector<CpNetworkMonitor*>::const_iterator it = iList.begin();
+
+    while (it != iList.end()) {
+		if ((*it)->Name() == aName) {
+			iMutex.Signal();
+			return (*it);
+		}
+        it++;
+    }   
+
+	iMutex.Signal();
+
+	return (0);
+}
+
+NetworkMonitorList::~NetworkMonitorList()
+{
+    std::vector<CpNetworkMonitor*>::iterator it = iList.begin();
+
+    while (it != iList.end()) {
+        (*it)->RemoveRef();
+        it++;
+    }   
+}
 
 class ReceiverThread
 {
@@ -205,20 +289,21 @@ public:
 
 int CDECL main(int aArgc, char* aArgv[])
 {
+	mygetch();
     InitialisationParams* initParams = InitialisationParams::Create();
 
 	UpnpLibrary::Initialise(initParams);
 
     OptionParser parser;
     
-    OptionString optionSender("-s", "--sender", Brn(""), "Sender endpoint (mandatory)");
+    OptionBool optionList("-l", "--list", "List Network Monitor Senders & Receivers");
+    parser.AddOption(&optionList);
+    
+    OptionString optionSender("-s", "--sender", Brn(""), "Sender name");
     parser.AddOption(&optionSender);
     
-    OptionString optionReceiver("-r", "--receiver", Brn(""), "Receiver endpoint (mandatory)");
+    OptionString optionReceiver("-r", "--receiver", Brn(""), "Receiver name");
     parser.AddOption(&optionReceiver);
-    
-    OptionUint optionPort("-p", "--port", 0, "Receiver datagram port (mandatory)");
-    parser.AddOption(&optionPort);
     
     OptionUint optionId("-i", "--id", 1, "Non-zero id for this set of messages");
     parser.AddOption(&optionId);
@@ -243,82 +328,58 @@ int CDECL main(int aArgc, char* aArgv[])
         return (1);
     }
 
-	Brhz sender(optionSender.Value());
+    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    TIpAddress subnet = (*subnetList)[0]->Subnet();
+    UpnpLibrary::DestroySubnetList(subnetList);
+    UpnpLibrary::StartCp(subnet);
 
-    if (sender.Bytes() == 0) {
-    	printf("No sender endpoint specified\n");
+	NetworkMonitorList* list = new NetworkMonitorList();
+	
+	CpNetworkMonitorList2* collector = new CpNetworkMonitorList2(*list);
+
+	printf("Finding Network Monitors .");
+	Thread::Sleep(1000);
+	printf(".");
+	Thread::Sleep(1000);
+	printf(".\n");
+
+	delete (collector);
+
+	if (optionList.Value()) {
+		list->Report();
+		delete (list);
+	    Net::UpnpLibrary::Close();
+		return(0);
+	}
+
+    if (optionSender.Value().Bytes() == 0) {
+    	printf("Sender not specified\n");
+		delete (list);
 	    Net::UpnpLibrary::Close();
     	return (1);
     }
     
-	Parser senderParser(sender);
-
-	Brn senderAddress = senderParser.Next(':');
-
-	TUint senderPort;
-
-	try {
-		senderPort = Ascii::Uint(senderParser.NextToEnd());
-	}
-	catch (AsciiError&)	{
-    	printf("Invalid sender endpoint\n");
-	    Net::UpnpLibrary::Close();
-    	return (1);
-	}
-
-	Endpoint senderEndpoint;
-
-	try
-	{
-		senderEndpoint.SetAddress(senderAddress);
-		senderEndpoint.SetPort(senderPort);
-	}
-	catch (NetworkError&) {
-    	printf("Invalid sender endpoint\n");
-	    Net::UpnpLibrary::Close();
-    	return (1);
-	}
-
-	Brhz receiver(optionReceiver.Value());
-    
-    if (receiver.Bytes() == 0) {
-    	printf("No receiver endpoint specified\n");
+    if (optionReceiver.Value().Bytes() == 0) {
+    	printf("Receiver not specified\n");
+		delete (list);
 	    Net::UpnpLibrary::Close();
     	return (1);
     }
     
-	Parser receiverParser(receiver);
+	CpNetworkMonitor* sender = list->Find(optionSender.Value());
 
-	Brn receiverAddress = receiverParser.Next(':');
-
-	TUint receiverPort;
-
-	try {
-		receiverPort = Ascii::Uint(receiverParser.NextToEnd());
-	}
-	catch (AsciiError&)	{
-    	printf("Invalid receiver endpoint\n");
+	if (!sender) {
+    	printf("Sender not found\n");
+		delete (list);
 	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
-	Endpoint receiverEndpoint;
+	CpNetworkMonitor* receiver = list->Find(optionReceiver.Value());
 
-	try	{
-		receiverEndpoint.SetAddress(receiverAddress);
-		receiverEndpoint.SetPort(receiverPort);
-	}
-	catch (NetworkError&) {
-    	printf("Invalid receiver endpoint\n");
-	    Net::UpnpLibrary::Close();
-    	return (1);
-	}
-
-
-	TUint port = optionPort.Value();
-
-	if (port == 0) {
-    	printf("Invalid receiver datagram port\n");
+	if (!receiver) {
+    	printf("Receiver not found\n");
+		delete (list);
 	    Net::UpnpLibrary::Close();
     	return (1);
 	}
@@ -327,6 +388,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	if (id == 0) {
     	printf("Invalid id\n");
+		delete (list);
 	    Net::UpnpLibrary::Close();
     	return (1);
 	}
@@ -341,14 +403,18 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	if (delay == 0) {
     	printf("Invalid delay\n");
+		delete (list);
 	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
     TBool analyse = optionAnalyse.Value();
+
+	Brhz senderName(sender->Name());
+	Brhz receiverName(receiver->Name());
 	
-	printf("From  : %s\n", sender.CString());
-	printf("To    : %s\n", receiver.CString());
+	printf("From  : %s\n", senderName.CString());
+	printf("To    : %s\n", receiverName.CString());
 	printf("Count : %d\n", count);
 	printf("Bytes : %d\n", bytes);
 	printf("Delay : %d\n", delay);
@@ -356,6 +422,8 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	SocketTcpClient receiverClient;
 	SocketTcpClient senderClient;
+
+	Endpoint receiverEndpoint(receiver->Results(), receiver->Address());
 
 	printf("Contacting receiver\n");
 
@@ -365,11 +433,14 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 	catch (NetworkError&) {
     	printf("Unable to contact receiver\n");
+		delete (list);
 	    Net::UpnpLibrary::Close();
     	return (1);
 	}
 
 	printf("Contacting sender\n");
+
+	Endpoint senderEndpoint(sender->Sender(), sender->Address());
 
 	try	{
 		senderClient.Open();
@@ -377,6 +448,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 	catch (NetworkError&) {
     	printf("Unable to contact sender\n");
+		delete (list);
 	    Net::UpnpLibrary::Close();
     	return (1);
 	}
@@ -386,9 +458,9 @@ int CDECL main(int aArgc, char* aArgv[])
 	Bws<1000> request;
 
 	request.Append("start ");
-	request.Append(receiverAddress);
+	Endpoint::AppendAddress(request, receiver->Address());
 	request.Append(":");
-	Ascii::AppendDec(request, port);
+	Ascii::AppendDec(request, receiver->Receiver());
 	request.Append(" ");
 	Ascii::AppendDec(request, id);
 	request.Append(" ");
@@ -415,6 +487,7 @@ int CDECL main(int aArgc, char* aArgv[])
 		senderClient.Close();
 		Brhz cresp(response);
 		printf("%s\n", cresp.CString());
+		delete (list);
 	    Net::UpnpLibrary::Close();
 		return (1);
 	}
@@ -449,6 +522,10 @@ int CDECL main(int aArgc, char* aArgv[])
 	printf("Closing receiver\n");
 
 	receiverClient.Close();
+
+	printf("Deleting network monitor list\n");
+
+	delete (list);
 
 	printf("Closing library\n");
 
