@@ -289,7 +289,6 @@ public:
 
 int CDECL main(int aArgc, char* aArgv[])
 {
-	mygetch();
     InitialisationParams* initParams = InitialisationParams::Create();
 
 	UpnpLibrary::Initialise(initParams);
