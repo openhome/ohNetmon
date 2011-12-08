@@ -2,7 +2,7 @@ all : ohNetmon ohNetworkMonitor
 
 .PHONY : ohNetworkMonitor
 
-ohNetworkMonitor : make_obj_dir $(objdir)/ohNetworkMonitor.$(exeext)
+ohNetworkMonitor : $(objdir) $(objdir)/ohNetworkMonitor.$(exeext)
 
 $(objdir)/ohNetworkMonitor.$(exeext) : ohNetworkMonitor.cpp NetworkMonitor.cpp
 	$(comp) $(compout)/ohNetworkMonitor.$(objext) -c ohNetworkMonitor.cpp
@@ -11,7 +11,7 @@ $(objdir)/ohNetworkMonitor.$(exeext) : ohNetworkMonitor.cpp NetworkMonitor.cpp
 
 .PHONY : ohNetmon
 
-ohNetmon : make_obj_dir $(objdir)/ohNetmon.$(exeext)
+ohNetmon : $(objdir) $(objdir)/ohNetmon.$(exeext)
 
 $(objdir)/ohNetmon.$(exeext) : ohNetmon.cpp CpNetworkMonitorList1.cpp CpNetworkMonitorList2.cpp
 	$(comp) $(compout)/ohNetmon.$(objext) -c ohNetmon.cpp

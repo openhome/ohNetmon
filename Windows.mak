@@ -42,7 +42,7 @@ default : all
 make_obj_dir : $(objdir)
 
 $(objdir) :
-	if not exist $(objdir) mkdir $(objdir)
+	if not exist Build\Obj\$(platform)\$(build) mkdir Build\Obj\$(platform)\$(build)
 
 clean:
 	del /S /Q Build\Obj\$(platform)\$(build)
