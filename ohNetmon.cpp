@@ -97,7 +97,7 @@ void NetworkMonitorList::Report() const
 
     while (it != iList.end()) {
 		Brhz name((*it)->Name());
-		printf(name.CString());
+		printf("%s", name.CString());
 		printf("\n");
         it++;
     }   
