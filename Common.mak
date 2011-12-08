@@ -7,7 +7,7 @@ ohNetworkMonitor : make_obj_dir $(objdir)ohNetworkMonitor.$(exeext)
 $(objdir)ohNetworkMonitor.$(exeext) : ohNetworkMonitor.cpp NetworkMonitor.cpp
 	$(compiler)ohNetworkMonitor.$(objext) -c $(cflags) $(includes) ohNetworkMonitor.cpp
 	$(compiler)NetworkMonitor.$(objext) -c $(cflags) $(includes) NetworkMonitor.cpp
-	$(link) $(linkoutput)$(objdir)ohNetworkMonitor.$(exeext) $(objdir)ohNetworkMonitor.$(objext) $(objdir)NetworkMonitor.$(objext) $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext) $(ohnetdir)$(libprefix)ohNetCore.lib $(ohnetdir)$(libprefix)TestFramework.$(libext)
+	$(link) $(linkoutput)$(objdir)ohNetworkMonitor.$(exeext) $(objdir)ohNetworkMonitor.$(objext) $(objdir)NetworkMonitor.$(objext) $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 .PHONY : ohNetmon
 
