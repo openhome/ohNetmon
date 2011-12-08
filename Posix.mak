@@ -55,9 +55,9 @@ default : all
 make_obj_dir : $(objdir)
 
 $(objdir) :
-	if not exist $(objdir) mkdir $(objdir)
+	mkdir -p $(objdir)
 
 clean:
-	del /S /Q Build\Obj\$(platform)\$(build)
+	rm -rf $(objdir)
 
 include Common.mak
