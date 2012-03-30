@@ -128,6 +128,7 @@ CpNetworkMonitorList2Device::~CpNetworkMonitorList2Device()
 
 	if (iNetworkMonitor != 0) {
 		iHandler.NetworkMonitorRemoved(*iNetworkMonitor);
+		iNetworkMonitor->RemoveRef();
 	}
 
     iDevice.RemoveRef();
