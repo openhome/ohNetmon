@@ -12,10 +12,16 @@ endif
 
 MACHINE = $(shell uname -s)
 ifeq ($(MACHINE), Darwin)
-platform_compflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
-platform_linkflags = -arch x86_64 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
+
+ifeq ($(mac-64),1)
+    platform_compflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
+    platform_linkflags = -arch x86_64 -framework CoreFoundation -framework SystemConfiguration
+else
+    platform_compflags = -DPLATFORM_MACOSX_GNU -m32 -mmacosx-version-min=10.4
+    platform_linkflags = -m32 -framework CoreFoundation -framework SystemConfiguration
+endif
+
 platform_dllflags = -install_name @executable_path/$(@F)
-platform_include = -I/System/Library/Frameworks/IOKit.framework/Headers/
 platform = Mac
 else
 platform_compflags = -Wno-psabi
