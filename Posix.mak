@@ -22,7 +22,11 @@ else
 endif
 
 platform_dllflags = -install_name @executable_path/$(@F)
-platform = Mac
+ifeq ($(mac-64),1)
+platform = Mac-x64
+else
+platform = Mac-x86
+endif
 else
 platform_compflags = -Wno-psabi
 platform_linkflags = 
