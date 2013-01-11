@@ -14,7 +14,9 @@ using namespace OpenHome::Net;
 
 // NetworkMonitor
 
-NetworkMonitor::NetworkMonitor(DvDevice& aDevice, const Brx& aName)
+NetworkMonitor::NetworkMonitor(Environment& aEnv, DvDevice& aDevice, const Brx& aName)
+    : iSender(aEnv)
+    , iReceiver(aEnv)
 {
 	iProvider = new NetworkMonitorProvider(aDevice, aName, iSender.SenderPort(), iReceiver.ReceiverPort(), iReceiver.ResultsPort());
 }
@@ -40,9 +42,9 @@ NetworkMonitorEvent::NetworkMonitorEvent()
 {
 }
 
-NetworkMonitorEvent::NetworkMonitorEvent(Brx& aBuf)
+NetworkMonitorEvent::NetworkMonitorEvent(Environment& aEnv, Brx& aBuf)
 {
-	TUint timestamp = Time::Now() * 1000;
+	TUint timestamp = Time::Now(aEnv) * 1000;
 
 	ASSERT(aBuf.Bytes() >= 12);
 
@@ -159,9 +161,11 @@ public:
 
 // NetworkMonitorSender
 
-NetworkMonitorSender::NetworkMonitorSender()
-	: iServer("NMTX", 0, 0)
-	, iTimer(MakeFunctor(*this, &NetworkMonitorSender::TimerExpired))
+NetworkMonitorSender::NetworkMonitorSender(Environment& aEnv)
+	: iEnv(aEnv)
+    , iSocket(aEnv)
+    , iServer(aEnv, "NMTX", 0, 0)
+	, iTimer(aEnv, MakeFunctor(*this, &NetworkMonitorSender::TimerExpired))
 {
 	iBuffer.FillZ();
     iServer.Add("NMTX", new NetworkMonitorSenderSession(*this));
@@ -177,7 +181,7 @@ void NetworkMonitorSender::Start(Endpoint aEndpoint, TUint aPeriodUs, TUint aByt
     iTtl = aTtl;
     iId = aId;
     iFrame = 0;
-    iNext = Time::Now() + iPeriodMs;
+    iNext = Time::Now(iEnv) + iPeriodMs;
     iTimer.FireAt(iNext);
 }
 
@@ -196,7 +200,7 @@ void NetworkMonitorSender::TimerExpired()
 	WriterBinary binary(writer);
 	binary.WriteUint32Be(iId);
 	binary.WriteUint32Be(iFrame++);
-	binary.WriteUint32Be(Time::Now() * 1000);
+	binary.WriteUint32Be(Time::Now(iEnv) * 1000);
 	binary.WriteUint32Be(iId);
 	iBuffer.SetBytes(iBytes);
     iSocket.Send(iBuffer, iEndpoint);
@@ -242,9 +246,10 @@ public:
 
 // NetworkMonitorReceiver
 
-NetworkMonitorReceiver::NetworkMonitorReceiver()
-    : iSocket(0)
-    , iServer("NMRX", 0, 0)
+NetworkMonitorReceiver::NetworkMonitorReceiver(Environment& aEnv)
+    : iEnv(aEnv)
+    , iSocket(aEnv, 0)
+    , iServer(aEnv, "NMRX", 0, 0)
     , iFifo(kEventQueueLength)
 {
     iServer.Add("spRs", new NetworkMonitorReceiverSession(iFifo));
@@ -284,7 +289,7 @@ void NetworkMonitorReceiver::Run()
 			break;
 		}
 
-		NetworkMonitorEvent rxevent(iBuffer);
+		NetworkMonitorEvent rxevent(iEnv, iBuffer);
 
 		if (overflow)
 		{

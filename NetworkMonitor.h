@@ -12,13 +12,14 @@
 #include <OpenHome/Net/Core/DvAvOpenhomeOrgNetworkMonitor1.h>
 
 namespace OpenHome {
+class Environment;
 namespace Net {
 
 class NetworkMonitorEvent
 {
 public:
     NetworkMonitorEvent();
-    NetworkMonitorEvent(Brx& aBuf);
+    NetworkMonitorEvent(Environment& aEnv, Brx& aBuf);
     TBool IsEmpty() const;
 	Brn Buffer() const;
 private:
@@ -35,12 +36,13 @@ class NetworkMonitorReceiver
     static const TUint kReceiverPort = 8889;
     static const TUint kResultsPort  = 8889;
 public:
-    NetworkMonitorReceiver();
+    NetworkMonitorReceiver(Environment& aEnv);
 	TUint ReceiverPort() const;
 	TUint ResultsPort() const;
     ~NetworkMonitorReceiver();
     void Run();
 private:
+    Environment& iEnv;
     SocketUdp iSocket;
     SocketTcpServer iServer;
     Fifo<NetworkMonitorEvent> iFifo;
@@ -52,13 +54,14 @@ class NetworkMonitorSender
 {
     static const TUint kMaxMessageBytes = 65536;
 public:
-    NetworkMonitorSender();
+    NetworkMonitorSender(Environment& aEnv);
 	TUint SenderPort() const;
     void Start(Endpoint aEndpoint, TUint aPeriodUs, TUint aBytes, TUint aIterations, TUint aTtl, TUint aId);
     void Stop();
 private:
     void TimerExpired();
 private:
+    Environment& iEnv;
     SocketUdp iSocket;
     SocketTcpServer iServer;
     Timer iTimer;
@@ -87,7 +90,7 @@ private:
 class NetworkMonitor
 {
 public:
-    NetworkMonitor(DvDevice& aDevice, const Brx& aName);
+    NetworkMonitor(Environment& aEnv, DvDevice& aDevice, const Brx& aName);
 	void SetName(const Brx& aValue);
 	~NetworkMonitor();
 private:

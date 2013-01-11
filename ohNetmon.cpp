@@ -291,50 +291,41 @@ int CDECL main(int aArgc, char* aArgv[])
 {
     InitialisationParams* initParams = InitialisationParams::Create();
 
-	UpnpLibrary::Initialise(initParams);
+	Library* lib = new Library(initParams);
 
     OptionParser parser;
     
     OptionBool optionList("-l", "--list", "List Network Monitor Senders & Receivers");
     parser.AddOption(&optionList);
-    
     OptionString optionSender("-s", "--sender", Brn(""), "Sender name");
     parser.AddOption(&optionSender);
-    
     OptionString optionReceiver("-r", "--receiver", Brn(""), "Receiver name");
     parser.AddOption(&optionReceiver);
-    
     OptionUint optionId("-i", "--id", 1, "Non-zero id for this set of messages");
     parser.AddOption(&optionId);
-    
     OptionUint optionCount("-c", "--count", 0, "Number of messages to send (0 = infinite)");
     parser.AddOption(&optionCount);
-    
     OptionUint optionBytes("-b", "--bytes", 12, "Number of bytes in each message (min = 12, max = 65536)");
     parser.AddOption(&optionBytes);
-    
     OptionUint optionDelay("-d", "--delay", 10000, "Delay in uS between each message");
     parser.AddOption(&optionDelay);
-
     OptionUint optionTtl("-t", "--ttl", 1, "Ttl used for messages");
     parser.AddOption(&optionTtl);
-
     OptionBool optionAnalyse("-a", "--analyse", "Analyse results");
     parser.AddOption(&optionAnalyse);
 
     if (!parser.Parse(aArgc, aArgv)) {
-	    Net::UpnpLibrary::Close();
+	    delete lib;
         return (1);
     }
 
-    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    std::vector<NetworkAdapter*>* subnetList = lib->CreateSubnetList();
     TIpAddress subnet = (*subnetList)[0]->Subnet();
-    UpnpLibrary::DestroySubnetList(subnetList);
-    UpnpLibrary::StartCp(subnet);
+    Library::DestroySubnetList(subnetList);
+    CpStack* cpStack = lib->StartCp(subnet);
 
 	NetworkMonitorList* list = new NetworkMonitorList();
-	
-	CpNetworkMonitorList2* collector = new CpNetworkMonitorList2(*list);
+	CpNetworkMonitorList2* collector = new CpNetworkMonitorList2(*cpStack, *list);
 
 	printf("Finding Network Monitors .");
 	Thread::Sleep(1000);
@@ -347,21 +338,21 @@ int CDECL main(int aArgc, char* aArgv[])
 	if (optionList.Value()) {
 		list->Report();
 		delete (list);
-	    Net::UpnpLibrary::Close();
+	    delete lib;
 		return(0);
 	}
 
     if (optionSender.Value().Bytes() == 0) {
     	printf("Sender not specified\n");
 		delete (list);
-	    Net::UpnpLibrary::Close();
+	    delete lib;
     	return (1);
     }
     
     if (optionReceiver.Value().Bytes() == 0) {
     	printf("Receiver not specified\n");
 		delete (list);
-	    Net::UpnpLibrary::Close();
+	    delete lib;
     	return (1);
     }
     
@@ -370,7 +361,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	if (!sender) {
     	printf("Sender not found\n");
 		delete (list);
-	    Net::UpnpLibrary::Close();
+	    delete lib;
     	return (1);
 	}
 
@@ -379,7 +370,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	if (!receiver) {
     	printf("Receiver not found\n");
 		delete (list);
-	    Net::UpnpLibrary::Close();
+	    delete lib;
     	return (1);
 	}
 
@@ -388,22 +379,19 @@ int CDECL main(int aArgc, char* aArgv[])
 	if (id == 0) {
     	printf("Invalid id\n");
 		delete (list);
-	    Net::UpnpLibrary::Close();
+	    delete lib;
     	return (1);
 	}
 
     TUint count = optionCount.Value();
-    
 	TUint bytes = optionBytes.Value();
-    
 	TUint ttl = optionTtl.Value();
-
     TUint delay = optionDelay.Value();
 
 	if (delay == 0) {
     	printf("Invalid delay\n");
 		delete (list);
-	    Net::UpnpLibrary::Close();
+
     	return (1);
 	}
 
@@ -427,13 +415,13 @@ int CDECL main(int aArgc, char* aArgv[])
 	printf("Contacting receiver\n");
 
 	try	{
-		receiverClient.Open();
+		receiverClient.Open(lib->Env());
 		receiverClient.Connect(receiverEndpoint, 1000);
 	}
 	catch (NetworkError&) {
     	printf("Unable to contact receiver\n");
 		delete (list);
-	    Net::UpnpLibrary::Close();
+
     	return (1);
 	}
 
@@ -442,13 +430,13 @@ int CDECL main(int aArgc, char* aArgv[])
 	Endpoint senderEndpoint(sender->Sender(), sender->Address());
 
 	try	{
-		senderClient.Open();
+		senderClient.Open(lib->Env());
 		senderClient.Connect(senderEndpoint, 1000);
 	}
 	catch (NetworkError&) {
     	printf("Unable to contact sender\n");
 		delete (list);
-	    Net::UpnpLibrary::Close();
+
     	return (1);
 	}
 
@@ -485,7 +473,7 @@ int CDECL main(int aArgc, char* aArgv[])
 		Brhz cresp(response);
 		printf("%s\n", cresp.CString());
 		delete (list);
-	    Net::UpnpLibrary::Close();
+	    delete lib;
 		return (1);
 	}
 
@@ -505,28 +493,22 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 
 	printf("Stopping sender\n");
-
 	senderClient.Write(Brn("stop\n"));
 
 	printf("Closing sender\n");
-
 	senderClient.Close();
 
 	printf("Deleting receiver thread\n");
-
 	delete (thread);
 
 	printf("Closing receiver\n");
-
 	receiverClient.Close();
 
 	printf("Deleting network monitor list\n");
-
 	delete (list);
 
 	printf("Closing library\n");
-
-	Net::UpnpLibrary::Close();
+	delete lib;
 
 	return (0);
 }

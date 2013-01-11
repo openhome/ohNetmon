@@ -163,7 +163,7 @@ void CpNetworkMonitorList2Job::Execute()
 
 // CpNetworkMonitorList2
 
-CpNetworkMonitorList2::CpNetworkMonitorList2(ICpNetworkMonitorList2Handler& aHandler)
+CpNetworkMonitorList2::CpNetworkMonitorList2(CpStack& aCpStack, ICpNetworkMonitorList2Handler& aHandler)
 	: iFree(kMaxJobCount)
 	, iReady(kMaxJobCount)
 {
@@ -171,7 +171,7 @@ CpNetworkMonitorList2::CpNetworkMonitorList2(ICpNetworkMonitorList2Handler& aHan
 		iFree.Write(new CpNetworkMonitorList2Job(aHandler));
 	}
 	
-	iNetworkMonitorList1 = new CpNetworkMonitorList1(*this);
+	iNetworkMonitorList1 = new CpNetworkMonitorList1(aCpStack, *this);
 	
 	iThread = new ThreadFunctor("NML2", MakeFunctor(*this, &CpNetworkMonitorList2::Run));
 

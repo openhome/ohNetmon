@@ -34,7 +34,7 @@ void CpNetworkMonitorList1Job::Execute()
 
 // CpNetworkMonitorList1
 
-CpNetworkMonitorList1::CpNetworkMonitorList1(ICpNetworkMonitorList1Handler& aHandler)
+CpNetworkMonitorList1::CpNetworkMonitorList1(CpStack& aCpStack, ICpNetworkMonitorList1Handler& aHandler)
 	: iFree(kMaxJobCount)
 	, iReady(kMaxJobCount)
 {
@@ -45,7 +45,7 @@ CpNetworkMonitorList1::CpNetworkMonitorList1(ICpNetworkMonitorList1Handler& aHan
     FunctorCpDevice NetworkMonitorAdded = MakeFunctorCpDevice(*this, &CpNetworkMonitorList1::NetworkMonitorAdded);
     FunctorCpDevice NetworkMonitorRemoved = MakeFunctorCpDevice(*this, &CpNetworkMonitorList1::NetworkMonitorRemoved);
     
-    iDeviceListNetworkMonitor = new CpDeviceListUpnpServiceType(Brn("av.openhome.org"), Brn("NetworkMonitor"), 1, NetworkMonitorAdded, NetworkMonitorRemoved);
+    iDeviceListNetworkMonitor = new CpDeviceListUpnpServiceType(aCpStack, Brn("av.openhome.org"), Brn("NetworkMonitor"), 1, NetworkMonitorAdded, NetworkMonitorRemoved);
 
 	iThread = new ThreadFunctor("NML1", MakeFunctor(*this, &CpNetworkMonitorList1::Run));
 

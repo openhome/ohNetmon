@@ -87,12 +87,14 @@ private:
 	TUint iResults;
 };
 
+class CpStack;
+
 class CpNetworkMonitorList2 : public ICpNetworkMonitorList1Handler, public ICpNetworkMonitorList2Handler
 {
 	static const TUint kMaxJobCount = 20;
 	
 public:
-	CpNetworkMonitorList2(ICpNetworkMonitorList2Handler& aHandler);
+	CpNetworkMonitorList2(CpStack& aCpStack, ICpNetworkMonitorList2Handler& aHandler);
 
 	void Refresh();
     

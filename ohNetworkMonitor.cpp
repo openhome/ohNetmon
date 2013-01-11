@@ -5,7 +5,6 @@
 #include <OpenHome/Net/Core/CpDeviceUpnp.h>
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Maths.h>
-#include <OpenHome/Net/Private/Stack.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
@@ -73,14 +72,13 @@ int CDECL main(int aArgc, char* aArgv[])
 
     InitialisationParams* initParams = InitialisationParams::Create();
 
-	UpnpLibrary::Initialise(initParams);
-
-    UpnpLibrary::StartDv();
+	Library* lib = new Library(initParams);
+    DvStack* dvStack = lib->StartDv();
 
 	Bws<100> udn("OpenHome-NetworkMonitor-");
     udn.Append(optionName.Value());
 
-    DvDeviceStandard* device = new DvDeviceStandard(udn);
+    DvDeviceStandard* device = new DvDeviceStandard(*dvStack, udn);
     
     device->SetAttribute("Upnp.Domain", "av.openhome.org");
     device->SetAttribute("Upnp.Type", "Sender");
@@ -95,7 +93,7 @@ int CDECL main(int aArgc, char* aArgv[])
     device->SetAttribute("Upnp.SerialNumber", "");
     device->SetAttribute("Upnp.Upc", "");
 
-	NetworkMonitor* nm = new NetworkMonitor(*device, optionName.Value());
+	NetworkMonitor* nm = new NetworkMonitor(lib->Env(), *device, optionName.Value());
 	
     device->SetEnabled();
 
@@ -110,6 +108,7 @@ int CDECL main(int aArgc, char* aArgv[])
     delete (nm);
 
     delete (device);
+    delete lib;
     
 	printf("\n");
 	
