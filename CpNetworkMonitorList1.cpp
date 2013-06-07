@@ -1,6 +1,7 @@
 #include "CpNetworkMonitorList1.h"
 
 #include <OpenHome/Private/Debug.h>
+#include "Debug.h"
 
 using namespace OpenHome;
 using namespace OpenHome::Net;

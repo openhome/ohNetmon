@@ -4,6 +4,7 @@
 #include <OpenHome/Private/Debug.h>
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Uri.h>
+#include "Debug.h"
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
