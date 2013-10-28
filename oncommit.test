@@ -5,7 +5,8 @@ suiteRunner = MakeSuiteRunner(context)
 
 # testharness honours a '#' within this string :)
 tests = """
-    TestNetworkMonitor
+#   TestNetworkMonitor requires interactive input (at least: "q"),
+#   so unsuitable as automatically run unit test
     """
 
 suiteRunner.run(tests)
