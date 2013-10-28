@@ -1,0 +1,11 @@
+from testharness.testsuite import MakeSuiteRunner
+
+# 'context' is predefined globally. until this is fixed, sorry :)
+suiteRunner = MakeSuiteRunner(context)
+
+# testharness honours a '#' within this string :)
+tests = """
+    TestNetworkMonitor
+    """
+
+suiteRunner.run(tests)
