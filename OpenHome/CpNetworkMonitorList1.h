@@ -15,7 +15,7 @@ class ICpNetworkMonitorList1Handler
 public:
 	virtual void NetworkMonitorAdded(CpDevice& aDevice) = 0;
 	virtual void NetworkMonitorRemoved(CpDevice& aDevice) = 0;
-	~ICpNetworkMonitorList1Handler() {}
+	virtual ~ICpNetworkMonitorList1Handler() {}
 };
 
 typedef void (ICpNetworkMonitorList1Handler::*ICpNetworkMonitorList1HandlerFunction)(CpDevice&);
@@ -26,6 +26,7 @@ public:
 	CpNetworkMonitorList1Job(ICpNetworkMonitorList1Handler& aHandler);
 	void Set(CpDevice& aDevice, ICpNetworkMonitorList1HandlerFunction aFunction);
     virtual void Execute();
+    virtual ~CpNetworkMonitorList1Job();
 private:
 	ICpNetworkMonitorList1Handler* iHandler;
 	CpDevice* iDevice;

@@ -13,7 +13,12 @@ CpNetworkMonitorList1Job::CpNetworkMonitorList1Job(ICpNetworkMonitorList1Handler
 	iHandler = &aHandler;
 	iDevice = 0;
 }
-	
+
+CpNetworkMonitorList1Job::~CpNetworkMonitorList1Job()
+{
+    // XXX resource leak?
+}
+
 void CpNetworkMonitorList1Job::Set(CpDevice& aDevice, ICpNetworkMonitorList1HandlerFunction aFunction)
 {
 	iDevice = &aDevice;

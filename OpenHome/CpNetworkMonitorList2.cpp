@@ -142,7 +142,12 @@ CpNetworkMonitorList2Job::CpNetworkMonitorList2Job(ICpNetworkMonitorList2Handler
 	iHandler = &aHandler;
 	iNetworkMonitor = 0;
 }
-	
+
+CpNetworkMonitorList2Job::~CpNetworkMonitorList2Job()
+{
+    // XXX resource leak?
+}
+
 void CpNetworkMonitorList2Job::Set(CpNetworkMonitor& aNetworkMonitor, ICpNetworkMonitorList2HandlerFunction aFunction)
 {
 	iNetworkMonitor = &aNetworkMonitor;
