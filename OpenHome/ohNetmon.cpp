@@ -25,6 +25,13 @@ int mygetch()
     return (_getch());
 }
 
+#elif defined(NOTERMIOS)
+
+int mygetch()
+{
+    return 0;
+}
+
 #else
 
 #define CDECL
