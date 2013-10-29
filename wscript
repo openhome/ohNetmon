@@ -121,7 +121,7 @@ def build(bld):
 # Bundles
 def bundle(ctx):
     print 'bundle binaries'
-    header_files = gather_files(ctx, '{top}', ['OpenHome/*.h'])
+    header_files = gather_files(ctx, '{top}', ['OpenHome/NetworkMonitor.h'])
     lib_names = ['ohNetmon']
     lib_files = gather_files(ctx, '{bld}', (ctx.env.cxxstlib_PATTERN % x for x in lib_names))
     bundle_dev_files = build_tree({
