@@ -27,6 +27,8 @@ int mygetch()
 
 #elif defined(NOTERMIOS)
 
+#define CDECL
+
 int mygetch()
 {
     return 0;
