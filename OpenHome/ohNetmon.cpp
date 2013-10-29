@@ -169,6 +169,8 @@ private:
 	TUint iTxTimebase;
 	TUint iRxTimebase;
 
+#define TOSL(x) ((signed long) x)
+#define TOUL(x) ((unsigned long) x)
 public:
 	ReceiverThread(SocketTcpClient& aSocket, TBool aAnalyse, TUint aId)
 		: iSocket(aSocket)
@@ -191,16 +193,16 @@ public:
 	void ReportTimings()
 	{
 		for (TInt i = 0; i < 100; i++) {
-			printf("%d : %d\n", i - 10, iTimings[i]);
+			printf("%ld : %lu\n", TOSL(i - 10), TOUL(iTimings[i]));
 		}
-		printf("Total  : %d\n", iTotal);
-		printf("Missed : %d\n", iMissed);
+		printf("Total  : %lu\n", TOUL(iTotal));
+		printf("Missed : %lu\n", TOUL(iMissed));
 	}
 
 	void Analyse(TUint aId, TUint aFrame, TUint aTx, TUint aRx)
 	{
 		if (aId != iId) {
-			printf("Unrecognised Id (id: %d, frame %d, tx %d, rx %d)\n", aId, aFrame, aTx, aRx);
+			printf("Unrecognised Id (id: %lu, frame %lu, tx %lu, rx %lu)\n", TOUL(aId), TOUL(aFrame), TOUL(aTx), TOUL(aRx));
 			return;
 		}
 
@@ -216,16 +218,16 @@ public:
 			TUint rxTimestamp = aRx - iRxTimebase;
 
 			if (aFrame < iLastFrame) {
-				printf("Out of order frames with %d folowed by %d\n", iLastFrame, aFrame);
+				printf("Out of order frames with %lu followed by %lu\n", TOUL(iLastFrame), TOUL(aFrame));
 			}
 			else if (aFrame == iLastFrame) {
-				printf("Repeated frame %d\n", aFrame);
+				printf("Repeated frame %lu\n", TOUL(aFrame));
 			}
 			else {
 				TUint missed = aFrame - iLastFrame - 1;
 
 				if (missed > 0) {
-					printf("Missed %d frames betwwen %d and %d\n", missed, iLastFrame, aFrame);
+					printf("Missed %lu frames between %lu and %lu\n", TOUL(missed), TOUL(iLastFrame), TOUL(aFrame));
 					iMissed += missed;
 				}
 				else {
@@ -241,11 +243,11 @@ public:
 
 					if (networkTime > iMax) {
 						iMax = networkTime;
-						printf("Max %duS on frame %d\n", iMax, aFrame);
+						printf("Max %lduS on frame %lu\n", TOSL(iMax), TOUL(aFrame));
 					}
 					if (networkTime < iMin) {
 						iMin = networkTime;
-						printf("Min %duS on frame %d\n", iMin, aFrame);
+						printf("Min %lduS on frame %lu\n", TOSL(iMin), TOUL(aFrame));
 					}
 				}
 			}
@@ -279,7 +281,7 @@ public:
 					Analyse(id, frame, tx, rx);
 				}
 				else {
-					printf("id: %d, frame %d, tx %d, rx %d\n", id, frame, tx, rx);
+					printf("id: %lu, frame %lu, tx %lu, rx %lu\n", TOUL(id), TOUL(frame), TOUL(tx), TOUL(rx));
 				}
 			}
 		}
@@ -317,7 +319,7 @@ int CDECL main(int aArgc, char* aArgv[])
     parser.AddOption(&optionBytes);
     OptionUint optionDelay("-d", "--delay", 10000, "Delay in uS between each message");
     parser.AddOption(&optionDelay);
-    OptionUint optionTtl("-t", "--ttl", 1, "Ttl used for messages");
+    OptionUint optionTtl("-t", "--ttl", 1, "TTL used for messages");
     parser.AddOption(&optionTtl);
     OptionBool optionAnalyse("-a", "--analyse", "Analyse results");
     parser.AddOption(&optionAnalyse);
@@ -410,10 +412,10 @@ int CDECL main(int aArgc, char* aArgv[])
 	
 	printf("From  : %s\n", senderName.CString());
 	printf("To    : %s\n", receiverName.CString());
-	printf("Count : %d\n", count);
-	printf("Bytes : %d\n", bytes);
-	printf("Delay : %d\n", delay);
-	printf("Ttl   : %d\n\n", ttl);
+	printf("Count : %lu\n", TOUL(count));
+	printf("Bytes : %lu\n", TOUL(bytes));
+	printf("Delay : %lu\n", TOUL(delay));
+	printf("TTL   : %lu\n\n", TOUL(ttl));
 
 	SocketTcpClient receiverClient;
 	SocketTcpClient senderClient;
