@@ -25,5 +25,51 @@
         "type":             "internal",
         "archive-filename": "${name}-${version}.tar.gz",
         "dest":             "dependencies/AnyPlatform/"
-    }
+    },
+    {   "name": "libplatform",
+        "type": "internal",
+        "version": "0.0.53",
+        "archive-suffix": "-Release",
+        "platform-ignore": {
+            "Core-armv5": false,
+            "Core-armv6": false,
+            "Core-ppc32": false,
+            "*": true },
+        "ignore": "${platform-ignore[$platform]}"
+    },
+    {   "name":             "libosa",
+        "type":             "internal",
+        "version":          "0.0.159",
+        "archive-suffix":   "-Release",
+        "platform-ignore": {
+            "Core-armv5": false,
+            "Core-armv6": false,
+            "Core-ppc32": false,
+            "*": true },
+        "ignore":           "${platform-ignore[$platform]}"
+    },
+    {   "name":             "transmute",
+        "version":          "0.0.7",
+        "type":             "internal",
+        "archive-filename": "${name}-${version}.tar.gz",
+        "platform-ignore": {
+            "Core-armv5": false,
+            "Core-armv6": false,
+            "Core-ppc32": false,
+            "*": true },
+        "ignore":           "${platform-ignore[$platform]}",
+        "dest":             "dependencies/AnyPlatform/"
+    },
+    {   "name":             "volkano-tools",
+        "version":          "0.0.4",
+        "type":             "internal",
+        "archive-filename": "${name}-${version}.tar.gz",
+        "platform-ignore": {
+            "Core-armv5": false,
+            "Core-armv6": false,
+            "Core-ppc32": false,
+            "*": true },
+        "ignore":           "${platform-ignore[$platform]}",
+        "dest":             "dependencies/AnyPlatform/${name}/"
+    } 
 ]
