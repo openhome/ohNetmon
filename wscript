@@ -133,6 +133,8 @@ def bundle(ctx):
 # == Command for invoking unit tests ==
 
 def test(tst):
+    print 'XXX  no unit tests available  XXX'
+    return  # XXX
     if not hasattr(tst, 'test_manifest'):
         tst.test_manifest = 'oncommit.test'
     print 'Testing using manifest:', tst.test_manifest
