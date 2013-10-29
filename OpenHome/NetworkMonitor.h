@@ -33,8 +33,8 @@ class NetworkMonitorReceiver
 {
     static const TUint kEventQueueLength = 65536;
     static const TUint kMaxMessageBytes = 65536;
-    static const TUint kReceiverPort = 8889;
-    static const TUint kResultsPort  = 8889;
+    static const TUint kReceiverPort = 0;
+    static const TUint kResultsPort  = 0;
 public:
     NetworkMonitorReceiver(Environment& aEnv);
 	TUint ReceiverPort() const;
