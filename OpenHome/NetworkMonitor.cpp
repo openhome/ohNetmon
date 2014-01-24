@@ -252,8 +252,8 @@ NetworkMonitorReceiver::NetworkMonitorReceiver(Environment& aEnv)
     , iServer(aEnv, "NMRX", 0, 0)
     , iFifo(kEventQueueLength)
 {
-    iServer.Add("spRs", new NetworkMonitorReceiverSession(iFifo));
-	iThread = new ThreadFunctor("NMRX", MakeFunctor(*this, &NetworkMonitorReceiver::Run), kPriorityHigh);
+    iServer.Add("NetmonRxServer", new NetworkMonitorReceiverSession(iFifo));
+	iThread = new ThreadFunctor("NetmonRxSession", MakeFunctor(*this, &NetworkMonitorReceiver::Run), kPriorityHigh);
 	iThread->Start();
 }
 

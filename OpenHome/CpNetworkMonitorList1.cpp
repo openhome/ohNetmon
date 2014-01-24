@@ -53,7 +53,7 @@ CpNetworkMonitorList1::CpNetworkMonitorList1(CpStack& aCpStack, ICpNetworkMonito
     
     iDeviceListNetworkMonitor = new CpDeviceListUpnpServiceType(aCpStack, Brn("av.openhome.org"), Brn("NetworkMonitor"), 1, NetworkMonitorAdded, NetworkMonitorRemoved);
 
-	iThread = new ThreadFunctor("NML1", MakeFunctor(*this, &CpNetworkMonitorList1::Run));
+	iThread = new ThreadFunctor("NetmonList1", MakeFunctor(*this, &CpNetworkMonitorList1::Run));
 
 	iThread->Start();
 }

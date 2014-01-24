@@ -179,7 +179,7 @@ CpNetworkMonitorList2::CpNetworkMonitorList2(CpStack& aCpStack, ICpNetworkMonito
 	
 	iNetworkMonitorList1 = new CpNetworkMonitorList1(aCpStack, *this);
 	
-	iThread = new ThreadFunctor("NML2", MakeFunctor(*this, &CpNetworkMonitorList2::Run));
+	iThread = new ThreadFunctor("NetmonList2", MakeFunctor(*this, &CpNetworkMonitorList2::Run));
 
 	iThread->Start();
 }
