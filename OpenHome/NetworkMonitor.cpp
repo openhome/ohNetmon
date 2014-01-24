@@ -164,11 +164,11 @@ public:
 NetworkMonitorSender::NetworkMonitorSender(Environment& aEnv)
 	: iEnv(aEnv)
     , iSocket(aEnv)
-    , iServer(aEnv, "NMTX", 0, 0)
+    , iServer(aEnv, "NetmonTxServer", 0, 0)
 	, iTimer(aEnv, MakeFunctor(*this, &NetworkMonitorSender::TimerExpired))
 {
 	iBuffer.FillZ();
-    iServer.Add("NMTX", new NetworkMonitorSenderSession(*this));
+    iServer.Add("NetmonTxSession", new NetworkMonitorSenderSession(*this));
 }
 
 void NetworkMonitorSender::Start(Endpoint aEndpoint, TUint aPeriodUs, TUint aBytes, TUint aIterations, TUint aTtl, TUint aId)
