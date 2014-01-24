@@ -11,4 +11,7 @@ bin/
 obj/
 .binaries/
 .obj/
+/dependencies/
+/waf-*-*
 /.waf-*/
+/.lock-*
