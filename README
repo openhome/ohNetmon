@@ -16,14 +16,14 @@ If you want to debug into ohNet classes, clone ohNet (https://github.com/openhom
 and build it as described in its README.
 
 To build ohNetmon:
-  cd ohMediaPlayer
+  cd ohNetmon
   ./waf configure --dest-platform=... --ohnet=... [--debug]
   ./waf build
 
 where:
 --dest-platform is one of Windows-x86, Linux-x86, Linux-ppc32, Core-ppc32, Core-armv6
 --ohnet is optional and points to either your ohNet source directory or the fetched binaries
-        (under your ohMediaPlayer/dependencies directory)
+        (under your ohNetmon/dependencies directory)
 --debug is optional and only required for debug builds.
         The default build is ndebug (aka release)
 
