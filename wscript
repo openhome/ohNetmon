@@ -7,7 +7,7 @@ import os.path, sys
 sys.path[0:0] = [os.path.join('dependencies', 'AnyPlatform', 'ohWafHelpers')]
 
 from filetasks import gather_files, build_tree, find_resource_or_fail
-from utilfuncs import invoke_test, guess_dest_platform, configure_toolchain, guess_ohnet_location
+from utilfuncs import invoke_test, guess_dest_platform, configure_toolchain, guess_ohnet_location, guess_libplatform_location
 
 
 def options(opt):
@@ -18,6 +18,7 @@ def options(opt):
     opt.add_option('--ohnet-lib-dir', action='store', default=None)
     opt.add_option('--testharness-dir', action='store', default=os.path.join('dependencies', 'AnyPlatform', 'testharness'))
     opt.add_option('--ohnet', action='store', default=None)
+    opt.add_option('--libplatform', action='store', default=None)
     opt.add_option('--debug', action='store_const', dest="debugmode", const="Debug", default="Release")
     opt.add_option('--release', action='store_const', dest="debugmode",  const="Release", default="Release")
     opt.add_option('--dest-platform', action='store', default=None)
@@ -42,6 +43,8 @@ def configure(conf):
         except KeyError:
             conf.fatal('Specify --dest-platform')
 
+    if conf.options.dest_platform in ['Core-ppc32', 'Core-armv5', 'Core-armv6']:
+        guess_libplatform_location(conf)
     configure_toolchain(conf)
     guess_ohnet_location(conf)
 
