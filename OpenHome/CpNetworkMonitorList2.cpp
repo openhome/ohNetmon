@@ -5,6 +5,7 @@
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Uri.h>
 #include "Debug.h"
+#include <Generated/CpAvOpenhomeOrgNetworkMonitor1.h>
 
 using namespace OpenHome;
 using namespace OpenHome::Net;

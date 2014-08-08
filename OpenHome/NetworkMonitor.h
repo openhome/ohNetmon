@@ -9,7 +9,6 @@
 #include <OpenHome/Private/Fifo.h>
 #include <OpenHome/Private/Network.h>
 #include <OpenHome/Private/Stream.h>
-#include <OpenHome/Net/Core/DvAvOpenhomeOrgNetworkMonitor1.h>
 
 namespace OpenHome {
 class Environment;
@@ -76,16 +75,7 @@ private:
     Bws<kMaxMessageBytes> iBuffer;
 };
 
-class NetworkMonitorProvider : public DvProviderAvOpenhomeOrgNetworkMonitor1
-{
-	static const TUint kMaxNameBytes = 100;
-public:
-	NetworkMonitorProvider(DvDevice& aDevice, const Brx& aName, TUint aSenderPort, TUint aReceiverPort, TUint aResultsPort);
-	void SetName(const Brx& aValue);
-private:
-	virtual void Name(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
-	virtual void Ports(IDvInvocation& aInvocation, IDvInvocationResponseUint& aSender, IDvInvocationResponseUint& aReceiver, IDvInvocationResponseUint& aResults);
-};
+class ProviderNetworkMonitor;
 
 class NetworkMonitor
 {
@@ -94,7 +84,7 @@ public:
 	void SetName(const Brx& aValue);
 	~NetworkMonitor();
 private:
-    NetworkMonitorProvider* iProvider;
+    ProviderNetworkMonitor* iProvider;
     NetworkMonitorSender iSender;
     NetworkMonitorReceiver iReceiver;
 };

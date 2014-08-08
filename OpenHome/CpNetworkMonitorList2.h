@@ -4,7 +4,6 @@
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Private/Fifo.h>
 #include <OpenHome/Private/Thread.h>
-#include <OpenHome/Net/Core/CpAvOpenhomeOrgNetworkMonitor1.h>
 
 #include <vector>
 
@@ -63,6 +62,8 @@ private:
 	CpNetworkMonitor* iNetworkMonitor;
 	ICpNetworkMonitorList2HandlerFunction iFunction;
 };
+
+class CpProxyAvOpenhomeOrgNetworkMonitor1;
 
 class CpNetworkMonitorList2Device : public INonCopyable
 {

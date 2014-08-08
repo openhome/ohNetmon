@@ -2,12 +2,32 @@
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Parser.h>
 #include <OpenHome/Private/Arch.h>
+#include <Generated/DvAvOpenhomeOrgNetworkMonitor1.h>
 
 #include <stdio.h>
 
 #ifdef _WIN32
 # pragma warning(disable:4355) // use of 'this' in ctor lists safe in this case
 #endif
+
+namespace OpenHome {
+class Environment;
+namespace Net {
+
+class ProviderNetworkMonitor : public DvProviderAvOpenhomeOrgNetworkMonitor1
+{
+	static const TUint kMaxNameBytes = 100;
+public:
+	ProviderNetworkMonitor(DvDevice& aDevice, const Brx& aName, TUint aSenderPort, TUint aReceiverPort, TUint aResultsPort);
+	void SetName(const Brx& aValue);
+private: // from DvProviderAvOpenhomeOrgNetworkMonitor1
+	void Name(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
+	void Ports(IDvInvocation& aInvocation, IDvInvocationResponseUint& aSender, IDvInvocationResponseUint& aReceiver, IDvInvocationResponseUint& aResults);
+};
+
+} // namespace Net
+} // namespace OpenHome
+
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
@@ -18,7 +38,7 @@ NetworkMonitor::NetworkMonitor(Environment& aEnv, DvDevice& aDevice, const Brx& 
     : iSender(aEnv)
     , iReceiver(aEnv)
 {
-	iProvider = new NetworkMonitorProvider(aDevice, aName, iSender.SenderPort(), iReceiver.ReceiverPort(), iReceiver.ResultsPort());
+	iProvider = new ProviderNetworkMonitor(aDevice, aName, iSender.SenderPort(), iReceiver.ReceiverPort(), iReceiver.ResultsPort());
 }
 
 void NetworkMonitor::SetName(const Brx& aValue)
@@ -316,9 +336,9 @@ void NetworkMonitorReceiver::Run()
 }
 
 
-// NetworkMonitorProvider
+// ProviderNetworkMonitor
 
-NetworkMonitorProvider::NetworkMonitorProvider(DvDevice& aDevice, const Brx& aName, TUint aSenderPort, TUint aReceiverPort, TUint aResultsPort)
+ProviderNetworkMonitor::ProviderNetworkMonitor(DvDevice& aDevice, const Brx& aName, TUint aSenderPort, TUint aReceiverPort, TUint aResultsPort)
 	: DvProviderAvOpenhomeOrgNetworkMonitor1(aDevice)
 {
     EnablePropertyName();
@@ -334,12 +354,12 @@ NetworkMonitorProvider::NetworkMonitorProvider(DvDevice& aDevice, const Brx& aNa
     SetPropertyResults(aResultsPort);
 }
 
-void NetworkMonitorProvider::SetName(const Brx& aValue)
+void ProviderNetworkMonitor::SetName(const Brx& aValue)
 {
     SetPropertyName(aValue);
 }
 
-void NetworkMonitorProvider::Name(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
+void ProviderNetworkMonitor::Name(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
 {
 	Brhz value;
     GetPropertyName(value);
@@ -349,7 +369,7 @@ void NetworkMonitorProvider::Name(IDvInvocation& aInvocation, IDvInvocationRespo
     aInvocation.EndResponse();
 }
 
-void NetworkMonitorProvider::Ports(IDvInvocation& aInvocation, IDvInvocationResponseUint& aSender, IDvInvocationResponseUint& aReceiver, IDvInvocationResponseUint& aResults)
+void ProviderNetworkMonitor::Ports(IDvInvocation& aInvocation, IDvInvocationResponseUint& aSender, IDvInvocationResponseUint& aReceiver, IDvInvocationResponseUint& aResults)
 {
     TUint sender;
     TUint receiver;
