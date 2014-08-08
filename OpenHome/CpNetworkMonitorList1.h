@@ -9,57 +9,58 @@
 
 namespace OpenHome {
 namespace Net {
+    class CpStack;
+}
+namespace Av {
 
 class ICpNetworkMonitorList1Handler
 {
 public:
-	virtual void NetworkMonitorAdded(CpDevice& aDevice) = 0;
-	virtual void NetworkMonitorRemoved(CpDevice& aDevice) = 0;
+	virtual void NetworkMonitorAdded(Net::CpDevice& aDevice) = 0;
+	virtual void NetworkMonitorRemoved(Net::CpDevice& aDevice) = 0;
 	virtual ~ICpNetworkMonitorList1Handler() {}
 };
 
-typedef void (ICpNetworkMonitorList1Handler::*ICpNetworkMonitorList1HandlerFunction)(CpDevice&);
+typedef void (ICpNetworkMonitorList1Handler::*ICpNetworkMonitorList1HandlerFunction)(Net::CpDevice&);
 
 class CpNetworkMonitorList1Job
 {
 public:
 	CpNetworkMonitorList1Job(ICpNetworkMonitorList1Handler& aHandler);
-	void Set(CpDevice& aDevice, ICpNetworkMonitorList1HandlerFunction aFunction);
+	void Set(Net::CpDevice& aDevice, ICpNetworkMonitorList1HandlerFunction aFunction);
     virtual void Execute();
     virtual ~CpNetworkMonitorList1Job();
 private:
 	ICpNetworkMonitorList1Handler* iHandler;
-	CpDevice* iDevice;
+	Net::CpDevice* iDevice;
 	ICpNetworkMonitorList1HandlerFunction iFunction;
 };
-
-class CpStack;
 
 class CpNetworkMonitorList1
 {
 	static const TUint kMaxJobCount = 20;
 	
 public:
-	CpNetworkMonitorList1(CpStack& aCpStack, ICpNetworkMonitorList1Handler& aHandler);
+	CpNetworkMonitorList1(Net::CpStack& aCpStack, ICpNetworkMonitorList1Handler& aHandler);
 	
     void Refresh();
     
     ~CpNetworkMonitorList1();
     
 private:
-	void NetworkMonitorAdded(CpDevice& aDevice);
-	void NetworkMonitorRemoved(CpDevice& aDevice);
+	void NetworkMonitorAdded(Net::CpDevice& aDevice);
+	void NetworkMonitorRemoved(Net::CpDevice& aDevice);
 
 	void Run();
 	
 private:
-	CpDeviceList* iDeviceListNetworkMonitor;
+	Net::CpDeviceList* iDeviceListNetworkMonitor;
 	Fifo<CpNetworkMonitorList1Job*> iFree;
 	Fifo<CpNetworkMonitorList1Job*> iReady;
 	ThreadFunctor* iThread;
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_TOPOLOGY1

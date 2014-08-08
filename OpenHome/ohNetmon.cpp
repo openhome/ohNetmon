@@ -57,7 +57,7 @@ int mygetch()
 #endif
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 	class NetworkMonitorList : public ICpNetworkMonitorList2Handler
 	{
@@ -73,10 +73,11 @@ namespace Net {
 		std::vector<CpNetworkMonitor*> iList;
 	};
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 using namespace OpenHome;
+using namespace OpenHome::Av;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 

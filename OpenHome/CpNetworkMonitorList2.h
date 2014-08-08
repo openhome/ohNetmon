@@ -11,6 +11,10 @@
 
 namespace OpenHome {
 namespace Net {
+    class CpStack;
+    class CpProxyAvOpenhomeOrgNetworkMonitor1;
+}
+namespace Av {
 
 class CpNetworkMonitorList2Device;
 
@@ -63,15 +67,13 @@ private:
 	ICpNetworkMonitorList2HandlerFunction iFunction;
 };
 
-class CpProxyAvOpenhomeOrgNetworkMonitor1;
-
 class CpNetworkMonitorList2Device : public INonCopyable
 {
 public:
-	CpNetworkMonitorList2Device(CpDevice& aDevice, ICpNetworkMonitorList2Handler& aHandler);
+	CpNetworkMonitorList2Device(Net::CpDevice& aDevice, ICpNetworkMonitorList2Handler& aHandler);
 	
 public:
-	TBool IsAttachedTo(CpDevice& aDevice);
+	TBool IsAttachedTo(Net::CpDevice& aDevice);
 	~CpNetworkMonitorList2Device();
 
 private:
@@ -79,24 +81,23 @@ private:
 	void EventNameChanged();
 
 private:
-	CpDevice& iDevice;
+	Net::CpDevice& iDevice;
 	ICpNetworkMonitorList2Handler& iHandler;
 	TIpAddress iAddress;
 	CpNetworkMonitor* iNetworkMonitor;
-	CpProxyAvOpenhomeOrgNetworkMonitor1* iService;
+	Net::CpProxyAvOpenhomeOrgNetworkMonitor1* iService;
 	TUint iSender;
 	TUint iReceiver;
 	TUint iResults;
 };
 
-class CpStack;
 
 class CpNetworkMonitorList2 : public ICpNetworkMonitorList1Handler, public ICpNetworkMonitorList2Handler
 {
 	static const TUint kMaxJobCount = 20;
 	
 public:
-	CpNetworkMonitorList2(CpStack& aCpStack, ICpNetworkMonitorList2Handler& aHandler);
+	CpNetworkMonitorList2(Net::CpStack& aCpStack, ICpNetworkMonitorList2Handler& aHandler);
 
 	void Refresh();
     
@@ -104,10 +105,10 @@ public:
     
 private:
 	// ICpNetworkMonitorList1Handler
-	virtual void NetworkMonitorAdded(CpDevice& aDevice);
-	virtual void NetworkMonitorRemoved(CpDevice& aDevice);
+	virtual void NetworkMonitorAdded(Net::CpDevice& aDevice);
+	virtual void NetworkMonitorRemoved(Net::CpDevice& aDevice);
 
-	void DeviceRemoved(CpDevice& aDevice);
+	void DeviceRemoved(Net::CpDevice& aDevice);
 
 	// ICpNetworkMonitorList2Handler
 	void NetworkMonitorAdded(CpNetworkMonitor& aNetworkMonitor);
@@ -123,7 +124,7 @@ private:
     std::vector<CpNetworkMonitorList2Device*> iDeviceList;
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_TOPOLOGY2

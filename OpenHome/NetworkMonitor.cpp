@@ -12,24 +12,25 @@
 
 namespace OpenHome {
 class Environment;
-namespace Net {
+namespace Av {
 
-class ProviderNetworkMonitor : public DvProviderAvOpenhomeOrgNetworkMonitor1
+class ProviderNetworkMonitor : public Net::DvProviderAvOpenhomeOrgNetworkMonitor1
 {
 	static const TUint kMaxNameBytes = 100;
 public:
-	ProviderNetworkMonitor(DvDevice& aDevice, const Brx& aName, TUint aSenderPort, TUint aReceiverPort, TUint aResultsPort);
+	ProviderNetworkMonitor(Net::DvDevice& aDevice, const Brx& aName, TUint aSenderPort, TUint aReceiverPort, TUint aResultsPort);
 	void SetName(const Brx& aValue);
-private: // from DvProviderAvOpenhomeOrgNetworkMonitor1
-	void Name(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
-	void Ports(IDvInvocation& aInvocation, IDvInvocationResponseUint& aSender, IDvInvocationResponseUint& aReceiver, IDvInvocationResponseUint& aResults);
+private: // from Net::DvProviderAvOpenhomeOrgNetworkMonitor1
+	void Name(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue);
+	void Ports(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseUint& aSender, Net::IDvInvocationResponseUint& aReceiver, Net::IDvInvocationResponseUint& aResults);
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 
 using namespace OpenHome;
+using namespace OpenHome::Av;
 using namespace OpenHome::Net;
 
 // NetworkMonitor

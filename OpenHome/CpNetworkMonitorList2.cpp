@@ -8,6 +8,7 @@
 #include <Generated/CpAvOpenhomeOrgNetworkMonitor1.h>
 
 using namespace OpenHome;
+using namespace OpenHome::Av;
 using namespace OpenHome::Net;
 
 // CpNetworkMonitor

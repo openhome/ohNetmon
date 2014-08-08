@@ -59,6 +59,7 @@ int mygetch()
 
 
 using namespace OpenHome;
+using namespace OpenHome::Av;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 

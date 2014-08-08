@@ -4,6 +4,7 @@
 #include "Debug.h"
 
 using namespace OpenHome;
+using namespace OpenHome::Av;
 using namespace OpenHome::Net;
 
 // CpNetworkMonitorList1Job

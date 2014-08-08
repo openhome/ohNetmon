@@ -12,7 +12,7 @@
 
 namespace OpenHome {
 class Environment;
-namespace Net {
+namespace Av {
 
 class NetworkMonitorEvent
 {
@@ -80,7 +80,7 @@ class ProviderNetworkMonitor;
 class NetworkMonitor
 {
 public:
-    NetworkMonitor(Environment& aEnv, DvDevice& aDevice, const Brx& aName);
+    NetworkMonitor(Environment& aEnv, Net::DvDevice& aDevice, const Brx& aName);
 	void SetName(const Brx& aValue);
 	~NetworkMonitor();
 private:
@@ -89,7 +89,7 @@ private:
     NetworkMonitorReceiver iReceiver;
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_NETWORK_MONITOR
