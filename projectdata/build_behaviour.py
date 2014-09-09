@@ -59,6 +59,7 @@ from ci import (
         build_step, require_version, add_option, specify_optional_steps,
         build_condition, default_platform, get_dependency_args,
         get_vsvars_environment, fetch_dependencies, python, scp)
+import platform
 
 require_version(22)
 
@@ -140,6 +141,9 @@ def fetch(context):
 
 @build_step("configure", optional=True)
 def configure(context):
+    if platform.system() == 'Darwin':
+        context.env['CC']  = 'clang'
+        context.env['CXX'] = 'clang++'
     python("waf", "configure", context.configure_args)
 
 @build_step("clean", optional=True)
