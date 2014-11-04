@@ -186,7 +186,7 @@ NetworkMonitorSender::NetworkMonitorSender(Environment& aEnv)
 	: iEnv(aEnv)
     , iSocket(aEnv)
     , iServer(aEnv, "NetmonTxServer", 0, 0)
-	, iTimer(aEnv, MakeFunctor(*this, &NetworkMonitorSender::TimerExpired))
+	, iTimer(aEnv, MakeFunctor(*this, &NetworkMonitorSender::TimerExpired), "NetworkMonitorSender")
 {
 	iBuffer.FillZ();
     iServer.Add("NetmonTxSession", new NetworkMonitorSenderSession(*this));
