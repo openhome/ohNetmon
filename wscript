@@ -110,7 +110,6 @@ def build(bld):
     # Library
     bld.stlib(
             source=[
-                'OpenHome/ohNetmon.cpp',
                 'OpenHome/NetworkMonitor.cpp',
                 'OpenHome/CpNetworkMonitorList1.cpp',
                 'OpenHome/CpNetworkMonitorList2.cpp',
@@ -119,6 +118,13 @@ def build(bld):
             ],
             use=['OHNET'],
             target='ohNetmon')
+
+    # ohNetmon.cpp /may/ have been superceded by TestNetworkMonitor.
+    # It's built here just in case.
+    bld.program(
+            source='OpenHome/ohNetmon.cpp',
+            use=['OHNET', 'ohNetmon'],
+            target='ohNetmon-app')
 
     bld.program(
             source='OpenHome/TestNetworkMonitor.cpp',
