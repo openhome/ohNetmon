@@ -5,22 +5,24 @@
 #include <OpenHome/Buffer.h>
 #include <OpenHome/Net/Core/DvDevice.h>
 #include <OpenHome/Private/Thread.h>
-#include <OpenHome/Private/Timer.h>
 #include <OpenHome/Private/Fifo.h>
 #include <OpenHome/Private/Network.h>
 #include <OpenHome/Private/Stream.h>
 
+EXCEPTION(NetworkMonitorEventInvalid);
+
 namespace OpenHome {
 class Environment;
+class Timer;
 namespace Av {
 
 class NetworkMonitorEvent
 {
 public:
     NetworkMonitorEvent();
-    NetworkMonitorEvent(Environment& aEnv, Brx& aBuf);
+    void Set(Environment& aEnv, Brx& aBuf);
     TBool IsEmpty() const;
-	Brn Buffer() const;
+    void AsBuffer(Bwx& aBuf) const;
 private:
     TUint iId;
     TUint iFrame;
@@ -30,15 +32,14 @@ private:
 
 class NetworkMonitorReceiver
 {
-    static const TUint kEventQueueLength = 65536;
+    static const TUint kEventQueueLength = 100;
     static const TUint kMaxMessageBytes = 65536;
-    static const TUint kReceiverPort = 0;
-    static const TUint kResultsPort  = 0;
 public:
     NetworkMonitorReceiver(Environment& aEnv);
+    ~NetworkMonitorReceiver();
 	TUint ReceiverPort() const;
 	TUint ResultsPort() const;
-    ~NetworkMonitorReceiver();
+private:
     void Run();
 private:
     Environment& iEnv;
@@ -54,6 +55,7 @@ class NetworkMonitorSender
     static const TUint kMaxMessageBytes = 65536;
 public:
     NetworkMonitorSender(Environment& aEnv);
+    ~NetworkMonitorSender();
 	TUint SenderPort() const;
     void Start(Endpoint aEndpoint, TUint aPeriodUs, TUint aBytes, TUint aIterations, TUint aTtl, TUint aId);
     void Stop();
@@ -63,7 +65,7 @@ private:
     Environment& iEnv;
     SocketUdp iSocket;
     SocketTcpServer iServer;
-    Timer iTimer;
+    Timer* iTimer;
     Endpoint iEndpoint;
     TUint iPeriodMs;
     TUint iBytes;
