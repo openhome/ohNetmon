@@ -211,8 +211,7 @@ void NetworkMonitorSender::Start(Endpoint aEndpoint, TUint aPeriodUs, TUint aByt
     iTtl = aTtl;
     iId = aId;
     iFrame = 0;
-    iNext = Time::Now(iEnv) + iPeriodMs;
-    iTimer->FireAt(iNext);
+    iTimer->FireAt(iPeriodMs);
 }
 
 void NetworkMonitorSender::Stop()
@@ -230,14 +229,13 @@ void NetworkMonitorSender::TimerExpired()
     WriterBinary binary(writer);
     binary.WriteUint32Be(iId);
     binary.WriteUint32Be(iFrame++);
-    binary.WriteUint32Be(Time::Now(iEnv) * 1000);
+    binary.WriteUint32Be((TUint)Os::TimeInUs(iEnv.OsCtx()));
     binary.WriteUint32Be(iId);
     iBuffer.SetBytes(iBytes);
     iSocket.Send(iBuffer, iEndpoint);
 
     if (iIterations == 0 || --iIterations > 0) {
-        iNext += iPeriodMs;
-        iTimer->FireAt(iNext);
+        iTimer->FireIn(iPeriodMs);
     }
 }
 

@@ -73,7 +73,6 @@ private:
     TUint iTtl;
     TUint iId;
     TUint iFrame;
-    TUint iNext;
     Bws<kMaxMessageBytes> iBuffer;
 };
 
