@@ -90,6 +90,7 @@ def choose_platform(context):
                 "Linux-x86" : "Linux-x86",
                 "Linux-x64" : "Linux-x64",
                 "Linux-ARM" : "Linux-ARM",
+                "Linux-armhf" : "Linux-armhf",
                 "Linux-ppc32" : "Linux-ppc32",
                 "Mac-x86" : "Mac-x86",
                 "Mac-x64" : "Mac-x64",
