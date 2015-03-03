@@ -132,6 +132,7 @@ def setup_windows(context):
 @build_condition(OH_PLATFORM="Linux-x86")
 @build_condition(OH_PLATFORM="Linux-x64")
 @build_condition(OH_PLATFORM="Linux-ARM")
+@build_condition(OH_PLATFORM="Linux-armhf")
 @build_condition(OH_PLATFORM="Linux-ppc32")
 def setup_linux(context):
     env = context.env
