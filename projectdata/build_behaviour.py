@@ -91,6 +91,7 @@ def choose_platform(context):
                 "Linux-x64" : "Linux-x64",
                 "Linux-ARM" : "Linux-ARM",
                 "Linux-armhf" : "Linux-armhf",
+                "Linux-mipsel" : "Linux-mipsel",
                 "Linux-ppc32" : "Linux-ppc32",
                 "Mac-x86" : "Mac-x86",
                 "Mac-x64" : "Mac-x64",
@@ -133,6 +134,7 @@ def setup_windows(context):
 @build_condition(OH_PLATFORM="Linux-x64")
 @build_condition(OH_PLATFORM="Linux-ARM")
 @build_condition(OH_PLATFORM="Linux-armhf")
+@build_condition(OH_PLATFORM="Linux-mipsel")
 @build_condition(OH_PLATFORM="Linux-ppc32")
 def setup_linux(context):
     env = context.env
