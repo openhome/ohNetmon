@@ -21,6 +21,11 @@ else:
     scrd=cenv['WORKSPACE']
     prefix=[]
 
+if cenv['PLATFORM'].startswith('Windows-'):
+    ext='.bat'
+else:
+    ext=''
+
 cargs = ['-t', cenv['PLATFORM']]
 if opts.debug:
     cargs += ['--debug',]
@@ -31,5 +36,5 @@ if 'RELEASE_VERSION' in cenv:
 else:
     cargs += ['--steps=default',]
 
-subprocess.check_call(args=prefix + [os.path.join(scrd, 'ohNetmon', 'go'), 'ci-build'] + cargs, cwd=cdir)
+subprocess.check_call(args=prefix + [os.path.join(scrd, 'ohNetmon', 'go'+ext), 'ci-build'] + cargs, cwd=cdir)
 
