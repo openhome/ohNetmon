@@ -26,7 +26,7 @@ if opts.debug:
     cargs += ['--debug',]
 else:
     cargs += ['--release',]
-if cenv['RELEASE_VERSION']:
+if 'RELEASE_VERSION' in cenv:
     cargs += ['--steps=default,publish', '--publish-version', cenv['RELEASE_VERSION']]
 else:
     cargs += ['--steps=default',]
