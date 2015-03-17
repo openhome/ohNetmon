@@ -475,9 +475,10 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	senderClient.Write(request);
 
-	Srs<1000> responseBuffer(senderClient);
+	Srs<512> responseBuffer(senderClient);
+    ReaderUntilS<1000> readerUntil(responseBuffer);
 
-	Brn response = responseBuffer.ReadUntil('\n');
+	Brn response = readerUntil.ReadUntil('\n');
 
 	if (response != Brn("OK")) {
 		senderClient.Close();

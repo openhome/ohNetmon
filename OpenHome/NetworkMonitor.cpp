@@ -125,9 +125,10 @@ void NetworkMonitorSenderSession::Run()
 {
     const TUint kMaxLineBytes = 128;
     Srs<kMaxLineBytes> buffer(*this);
+    ReaderUntilS<kMaxLineBytes> readerUntil(buffer);
     for (;;) {
         try {
-            Brn line = buffer.ReadUntil('\n');
+            Brn line = readerUntil.ReadUntil('\n');
             Parser parser(Ascii::Trim(line));
             const Brn command = parser.Next();
             if (Ascii::CaseInsensitiveEquals(command, Brn("start"))) {
