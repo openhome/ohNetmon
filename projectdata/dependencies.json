@@ -2,7 +2,7 @@
     {   "name": "ohNet",
         "type": "openhome",
         "platform-specific": true,
-        "version": "1.4.1750",
+        "version": "1.4.1762",
         "archive-suffix": "-${debugmode}",
         "main-dir": "${dest}${name}-${platform}-${debugmode}",
         "configure-args": [
@@ -17,7 +17,7 @@
     {   "name": "ohWafHelpers",
         "type": "openhome",
         "platform-specific": false,
-        "version": "0.0.84",
+        "version": "0.0.85",
         "archive-filename": "${name}-${version}.tar.gz"
     },
     {   "name":             "testharness",
@@ -28,7 +28,7 @@
     },
     {   "name": "libplatform",
         "type": "internal",
-        "version": "0.0.149",
+        "version": "0.0.150",
         "archive-suffix": "-Release",
         "platform-ignore": {
             "Core-armv5": false,
